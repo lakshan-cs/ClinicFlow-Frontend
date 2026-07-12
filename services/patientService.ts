@@ -35,3 +35,6 @@ export interface PatientResponse {
 
 export const createPatient = (data: PatientPayload): Promise<PatientResponse> =>
   apiClient.post<PatientResponse>('/api/Patient', data).then((r) => r.data);
+
+export const getAllPatients = (): Promise<PatientResponse[]> =>
+  apiClient.get<PatientResponse[]>('/api/Patient').then((r) => r.data);

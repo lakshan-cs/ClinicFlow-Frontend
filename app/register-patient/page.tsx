@@ -17,7 +17,6 @@ import {
   Group,
   ThemeIcon,
   Stepper,
-  Badge,
 } from '@mantine/core';
 
 import { notifications } from '@mantine/notifications';
@@ -32,8 +31,10 @@ import {
   IconMail,
   IconPhone,
   IconLogout,
+  IconSearch,
+  IconUserCircle,
 } from '@tabler/icons-react';
-import { createPatient } from '../../services/patientService';
+import { createPatient, getAllPatients, PatientResponse } from '../../services/patientService';
 import { getUser } from '../../services/authService';
 
 // ---------------------------------------------------------------------------
@@ -82,10 +83,19 @@ const STEPS = [
 export default function RegisterPatientPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [allPatients, setAllPatients] = useState<PatientResponse[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState<PatientResponse | null>(null);
+
+  const filteredPatients = allPatients.filter((p) =>
+    p.fullName.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Auth guard
   useEffect(() => {
     if (!getUser()) router.replace('/login');
+    getAllPatients().then(setAllPatients).catch(() => {});
   }, [router]);
 
   const {
@@ -180,17 +190,56 @@ export default function RegisterPatientPage() {
       <div className="flex-1 flex flex-col items-center justify-start py-10 px-6 overflow-y-auto">
       <div className="w-full max-w-6xl">
 
-        {/* ── Top badge ── */}
-        <div className="flex justify-center mb-6">
-          <Badge
-            size="lg"
-            variant="light"
-            color="blue"
-            leftSection={<IconHeartbeat size={14} />}
-            className="px-4 py-1 text-sm font-semibold tracking-wide"
-          >
-            ClinicFlow — Patient Intake System
-          </Badge>
+        {/* ── Search bar ── */}
+        <div className="relative mb-6">
+          <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-sm focus-within:ring-2 focus-within:ring-blue-300 focus-within:border-blue-400 transition-all">
+            <IconSearch size={18} className="text-slate-400 shrink-0" />
+            <input
+              type="text"
+              placeholder="Search existing patients by name before registering..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setSearchOpen(true)}
+              onBlur={() => setTimeout(() => setSearchOpen(false), 150)}
+              className="flex-1 text-sm text-gray-700 bg-transparent outline-none placeholder-slate-400"
+            />
+            {searchQuery && (
+              <button onClick={() => { setSearchQuery(''); setSearchOpen(false); setSelectedPatient(null); }} className="text-slate-400 hover:text-slate-600 text-xs">
+                ✕
+              </button>
+            )}
+          </div>
+
+          {/* Dropdown */}
+          {searchOpen && (
+            <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-72 overflow-y-auto">
+              {filteredPatients.length === 0 ? (
+                <div className="px-4 py-6 text-center text-sm text-slate-400">
+                  {searchQuery ? 'No patients found matching your search.' : 'No patients registered yet.'}
+                </div>
+              ) : (
+                filteredPatients.map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-blue-50 cursor-pointer border-b border-slate-100 last:border-0 transition-colors"
+                    onMouseDown={() => {
+                      setSearchQuery(p.fullName);
+                      setSelectedPatient(p);
+                      setSearchOpen(false);
+                    }}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                      <IconUserCircle size={18} className="text-blue-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">{p.fullName}</p>
+                      <p className="text-xs text-slate-400">{p.email} &bull; DOB: {p.dateOfBirth?.split('T')[0]}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
 
         {/* ── Wizard stepper ── */}
@@ -381,23 +430,30 @@ export default function RegisterPatientPage() {
                 </div>
 
                 {/* Submit */}
-                <Button
-                  type="submit"
-                  size="lg"
-                  radius="xl"
-                  fullWidth
-                  loading={loading}
-                  rightSection={!loading && <IconArrowRight size={18} />}
-                  mt={24}
-                  style={{
-                    backgroundColor: '#0d6efd',
-                    border: 'none',
-                    fontWeight: 600,
-                    boxShadow: '0 2px 8px rgba(13,110,253,0.30)',
-                  }}
-                >
-                  Save &amp; Continue
-                </Button>
+                <div className="flex gap-3 mt-6">
+                  <Button
+                    type="submit"
+                    size="lg"
+                    radius="xl"
+                    style={{ flex: 1, backgroundColor: '#0d6efd', border: 'none', fontWeight: 600, boxShadow: '0 2px 8px rgba(13,110,253,0.30)' }}
+                    loading={loading}
+                    rightSection={!loading && <IconArrowRight size={18} />}
+                  >
+                    Save &amp; Continue
+                  </Button>
+                  <Button
+                    type="button"
+                    size="lg"
+                    radius="xl"
+                    variant="outline"
+                    disabled={!selectedPatient}
+                    onClick={() => selectedPatient && router.push(`/register-patient/symptoms?patientId=${selectedPatient.id}`)}
+                    style={{ flex: 1, fontWeight: 600, borderColor: selectedPatient ? '#0d6efd' : '#e2e8f0', color: selectedPatient ? '#0d6efd' : '#94a3b8' }}
+                    rightSection={<IconArrowRight size={18} />}
+                  >
+                    Skip — Use Selected Patient
+                  </Button>
+                </div>
 
               </Stack>
             </form>
