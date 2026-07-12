@@ -87,6 +87,10 @@ export default function RegisterPatientPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<PatientResponse | null>(null);
+  const [registeredPatient, setRegisteredPatient] = useState<PatientResponse | null>(null);
+
+  // The patient to display in sidebar — newly registered takes priority over search selection
+  const summaryPatient = registeredPatient ?? selectedPatient;
 
   const filteredPatients = allPatients.filter((p) =>
     p.fullName.toLowerCase().includes(searchQuery.toLowerCase())
@@ -119,6 +123,8 @@ export default function RegisterPatientPage() {
 
       const patient = await createPatient(payload);
 
+      setRegisteredPatient(patient);
+
       notifications.show({
         title: 'Success',
         message: `Patient registered successfully`,
@@ -126,7 +132,7 @@ export default function RegisterPatientPage() {
       });
 
       // Proceed to step 2 — pass patientId via search param
-      router.push(`/register-patient/symptoms?patientId=${patient.id}`);
+      router.push(`/record-symptoms?patientId=${patient.id}`);
     } catch (error) {
       let errorMessage = 'Could not save patient. Please try again.';
 
@@ -171,7 +177,43 @@ export default function RegisterPatientPage() {
         </div>
 
         {/* Empty space — patient details will appear here later */}
-        <div className="flex-1" />
+        <div className="flex-1 px-4 py-5">
+          {summaryPatient ? (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#94a3b8' }}>Patient Summary</p>
+              <div className="rounded-xl p-4" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }}>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(99,179,237,0.2)' }}>
+                    <IconUserCircle size={22} style={{ color: '#93c5fd' }} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold leading-tight" style={{ color: '#f1f5f9' }}>{summaryPatient.fullName}</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>ID #{summaryPatient.id}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-start gap-2">
+                    <IconMail size={13} style={{ color: '#94a3b8', marginTop: 2 }} />
+                    <p className="text-xs break-all" style={{ color: '#cbd5e1' }}>{summaryPatient.email}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <IconPhone size={13} style={{ color: '#94a3b8' }} />
+                    <p className="text-xs" style={{ color: '#cbd5e1' }}>{summaryPatient.phoneNumber}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <IconUser size={13} style={{ color: '#94a3b8' }} />
+                    <p className="text-xs" style={{ color: '#cbd5e1' }}>DOB: {summaryPatient.dateOfBirth?.split('T')[0]}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full py-10 text-center">
+              <IconUserCircle size={36} style={{ color: '#334d66', marginBottom: 8 }} />
+              <p className="text-xs" style={{ color: '#4a6580' }}>Patient summary will appear here after registration or selection.</p>
+            </div>
+          )}
+        </div>
 
         {/* Logout */}
         <div className="px-4 pb-6">
@@ -447,7 +489,7 @@ export default function RegisterPatientPage() {
                     radius="xl"
                     variant="outline"
                     disabled={!selectedPatient}
-                    onClick={() => selectedPatient && router.push(`/register-patient/symptoms?patientId=${selectedPatient.id}`)}
+                    onClick={() => selectedPatient && router.push(`/record-symptoms?patientId=${selectedPatient.id}`)}
                     style={{ flex: 1, fontWeight: 600, borderColor: selectedPatient ? '#0d6efd' : '#e2e8f0', color: selectedPatient ? '#0d6efd' : '#94a3b8' }}
                     rightSection={<IconArrowRight size={18} />}
                   >

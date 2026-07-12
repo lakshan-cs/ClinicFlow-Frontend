@@ -38,3 +38,6 @@ export const createPatient = (data: PatientPayload): Promise<PatientResponse> =>
 
 export const getAllPatients = (): Promise<PatientResponse[]> =>
   apiClient.get<PatientResponse[]>('/api/Patient').then((r) => r.data);
+
+export const getPatientById = (id: string | number): Promise<PatientResponse> =>
+  apiClient.get<PatientResponse>(`/api/Patient/${id}`).then((r) => r.data);
