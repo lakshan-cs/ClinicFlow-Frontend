@@ -1,0 +1,411 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import axios from 'axios';
+import {
+  Paper,
+  Title,
+  Text,
+  Button,
+  TextInput,
+  Input,
+  Stack,
+  Group,
+  ThemeIcon,
+  Stepper,
+  Badge,
+} from '@mantine/core';
+
+import { notifications } from '@mantine/notifications';
+import {
+  IconUserPlus,
+  IconClipboardList,
+  IconStethoscope,
+  IconCalendarCheck,
+  IconHeartbeat,
+  IconArrowRight,
+  IconUser,
+  IconMail,
+  IconPhone,
+  IconLogout,
+} from '@tabler/icons-react';
+import { createPatient } from '../../services/patientService';
+import { getUser } from '../../services/authService';
+
+// ---------------------------------------------------------------------------
+// Validation schema
+// ---------------------------------------------------------------------------
+const patientSchema = z.object({
+  fullName: z
+    .string()
+    .min(2, 'Full name must be at least 2 characters')
+    .max(100, 'Full name must be less than 100 characters')
+    .regex(/^[a-zA-Z\s'-]+$/, 'Full name can only contain letters, spaces, hyphens, and apostrophes'),
+  dateOfBirth: z
+    .string()
+    .min(1, 'Date of birth is required')
+    .refine((val) => !isNaN(Date.parse(val)), { message: 'Please enter a valid date' })
+    .refine((val) => new Date(val) <= new Date(), { message: 'Date of birth cannot be in the future' })
+    .refine((val) => new Date().getFullYear() - new Date(val).getFullYear() <= 130, { message: 'Please enter a valid date of birth' }),
+  email: z
+    .string()
+    .min(1, 'Email is required')
+    .email('Please enter a valid email address'),
+  phoneNumber: z
+    .string()
+    .min(1, 'Phone number is required')
+    .regex(
+      /^\+?[0-9\s\-().]{7,20}$/,
+      'Enter a valid phone number (7–20 digits, optional +, spaces, dashes)',
+    ),
+});
+
+type PatientFormValues = z.infer<typeof patientSchema>;
+
+// ---------------------------------------------------------------------------
+// Wizard step metadata (mirrors dashboard)
+// ---------------------------------------------------------------------------
+const STEPS = [
+  { icon: IconUserPlus,      color: 'blue',   label: 'Register Patient',  desc: 'Patient details & contact info' },
+  { icon: IconClipboardList, color: 'violet', label: 'Record Symptoms',   desc: 'Chief complaints & symptoms' },
+  { icon: IconStethoscope,   color: 'teal',   label: 'Select a Doctor',   desc: 'Match with a specialist' },
+  { icon: IconCalendarCheck, color: 'green',  label: 'Book Appointment',  desc: 'Schedule & confirm' },
+];
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+export default function RegisterPatientPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  // Auth guard
+  useEffect(() => {
+    if (!getUser()) router.replace('/login');
+  }, [router]);
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<PatientFormValues>({
+    resolver: zodResolver(patientSchema),
+    defaultValues: { fullName: '', dateOfBirth: '', email: '', phoneNumber: '' },
+  });
+
+  const onSubmit = async (data: PatientFormValues) => {
+    setLoading(true);
+    try {
+      const payload = {
+        fullName: data.fullName,
+        dateOfBirth: data.dateOfBirth,
+        email: data.email,
+        phoneNumber: data.phoneNumber,
+      };
+
+      const patient = await createPatient(payload);
+
+      notifications.show({
+        title: 'Success',
+        message: `Patient registered successfully`,
+        color: 'green',
+      });
+
+      // Proceed to step 2 — pass patientId via search param
+      router.push(`/register-patient/symptoms?patientId=${patient.id}`);
+    } catch (error) {
+      let errorMessage = 'Could not save patient. Please try again.';
+
+      if (axios.isAxiosError(error)) {
+        errorMessage =
+          error.response?.data?.message ||
+          error.response?.data?.error ||
+          errorMessage;
+      }
+
+      notifications.show({
+        title: 'Registration failed',
+        message: errorMessage,
+        color: 'red',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') localStorage.clear();
+    router.replace('/login');
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50 flex font-sans">
+
+      {/* ── Sidebar ── */}
+      <aside className="w-64 min-h-screen flex flex-col" style={{ backgroundColor: '#1a3c5e' }}>
+        {/* Brand */}
+        <div className="px-6 py-6 border-b border-white/10">
+          <Group gap={10}>
+            <ThemeIcon size={36} radius="xl" color="blue" variant="light">
+              <IconHeartbeat size={20} />
+            </ThemeIcon>
+            <div>
+              <Text fw={700} size="sm" style={{ color: '#f1f5f9' }} lh={1.2}>ClinicFlow</Text>
+              <Text size="xs" style={{ color: '#94a3b8' }}>Patient Intake</Text>
+            </div>
+          </Group>
+        </div>
+
+        {/* Empty space — patient details will appear here later */}
+        <div className="flex-1" />
+
+        {/* Logout */}
+        <div className="px-4 pb-6">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
+            style={{ backgroundColor: '#ef4444' }}
+          >
+            <IconLogout size={17} />
+            Logout
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main content ── */}
+      <div className="flex-1 flex flex-col items-center justify-start py-10 px-6 overflow-y-auto">
+      <div className="w-full max-w-6xl">
+
+        {/* ── Top badge ── */}
+        <div className="flex justify-center mb-6">
+          <Badge
+            size="lg"
+            variant="light"
+            color="blue"
+            leftSection={<IconHeartbeat size={14} />}
+            className="px-4 py-1 text-sm font-semibold tracking-wide"
+          >
+            ClinicFlow — Patient Intake System
+          </Badge>
+        </div>
+
+        {/* ── Wizard stepper ── */}
+        <Paper
+          radius="xl"
+          p={28}
+          mb={24}
+          className="border border-blue-100"
+          style={{ boxShadow: '0 4px 24px rgba(59,130,246,0.08)' }}
+        >
+          <Stepper
+            active={0}
+            size="sm"
+            color="blue"
+            styles={{
+              root: { width: '100%' },
+              steps: { display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+              stepLabel: { fontWeight: 700, fontSize: 13, color: '#1e3a5f', whiteSpace: 'nowrap' },
+              stepDescription: { fontSize: 11, color: '#64748b', marginTop: 1, whiteSpace: 'nowrap' },
+              separator: { borderColor: '#bfdbfe', borderWidth: 2, flex: 1 },
+              step: { gap: 8 },
+            }}
+          >
+            {STEPS.map((s, idx) => {
+              const isActive = idx === 0;
+              return (
+                <Stepper.Step
+                  key={s.label}
+                  label={s.label}
+                  description={s.desc}
+                  styles={{
+                    stepLabel: {
+                      fontWeight: isActive ? 700 : 500,
+                      fontSize: 13,
+                      color: isActive ? '#1e3a5f' : '#94a3b8',
+                      whiteSpace: 'nowrap',
+                    },
+                    stepDescription: {
+                      fontSize: 11,
+                      color: isActive ? '#64748b' : '#cbd5e1',
+                      marginTop: 1,
+                      whiteSpace: 'nowrap',
+                    },
+                  }}
+                  icon={
+                    <ThemeIcon
+                      size={26}
+                      radius="xl"
+                      color={s.color}
+                      variant={isActive ? 'light' : 'subtle'}
+                      style={{ opacity: isActive ? 1 : 0.4 }}
+                    >
+                      <s.icon size={14} />
+                    </ThemeIcon>
+                  }
+                />
+              );
+            })}
+          </Stepper>
+        </Paper>
+
+        {/* ── Form card ── */}
+        <Paper
+          shadow="md"
+          radius="xl"
+          p={48}
+          className="w-full border border-blue-100"
+          style={{ boxShadow: '0 8px 48px rgba(59,130,246,0.10)' }}
+        >
+          <Stack gap={32}>
+
+            {/* Header */}
+            <div>
+              <Group gap={12} mb={4}>
+                <ThemeIcon size={44} radius="xl" color="blue" variant="light">
+                  <IconUserPlus size={22} />
+                </ThemeIcon>
+                <div>
+                  <Title order={2} className="text-gray-800 font-bold text-2xl">
+                    Patient Registration
+                  </Title>
+                  <Text size="sm" c="dimmed" mt={2}>
+                    Step 1 of 4 — Enter the patient&apos;s personal details
+                  </Text>
+                </div>
+              </Group>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSubmit(onSubmit)} noValidate>
+              <Stack gap={20}>
+
+                {/* Full Name */}
+                <Controller
+                  name="fullName"
+                  control={control}
+                  render={({ field }) => (
+                    <TextInput
+                      {...field}
+                      label="Full Name"
+                      placeholder="e.g. Jane Doe"
+                      required
+                      error={errors.fullName?.message}
+                      size="md"
+                      leftSection={<IconUser size={16} className="text-blue-400" />}
+                      styles={{
+                        label: { fontWeight: 600, color: '#374151', marginBottom: 6 },
+                        input: { backgroundColor: '#f8fafc', borderColor: errors.fullName ? '#ef4444' : '#e2e8f0' },
+                      }}
+                    />
+                  )}
+                />
+
+                {/* Date of Birth */}
+                <Controller
+                  name="dateOfBirth"
+                  control={control}
+                  render={({ field }) => (
+                    <Input.Wrapper
+                      label="Date of Birth"
+                      required
+                      error={errors.dateOfBirth?.message}
+                      styles={{ label: { fontWeight: 600, color: '#374151', marginBottom: 6 } }}
+                    >
+                      <Input
+                        component="input"
+                        {...field}
+                        type="date"
+                        max={new Date().toISOString().split('T')[0]}
+                        size="md"
+                        error={!!errors.dateOfBirth}
+                        styles={{
+                          input: {
+                            backgroundColor: '#f8fafc',
+                            borderColor: errors.dateOfBirth ? '#ef4444' : '#e2e8f0',
+                            colorScheme: 'light',
+                            color: field.value ? '#1f2937' : '#9ca3af',
+                          },
+                        }}
+                      />
+                    </Input.Wrapper>
+                  )}
+                />
+
+                {/* Email + Phone side by side */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <Controller
+                    name="email"
+                    control={control}
+                    render={({ field }) => (
+                      <TextInput
+                        {...field}
+                        label="Email Address"
+                        placeholder="patient@example.com"
+                        type="email"
+                        required
+                        error={errors.email?.message}
+                        size="md"
+                        leftSection={<IconMail size={16} className="text-blue-400" />}
+                        styles={{
+                          label: { fontWeight: 600, color: '#374151', marginBottom: 6 },
+                          input: { backgroundColor: '#f8fafc', borderColor: errors.email ? '#ef4444' : '#e2e8f0' },
+                        }}
+                      />
+                    )}
+                  />
+
+                  <Controller
+                    name="phoneNumber"
+                    control={control}
+                    render={({ field }) => (
+                      <TextInput
+                        {...field}
+                        label="Phone Number"
+                        placeholder="+1 (555) 000-0000"
+                        type="tel"
+                        required
+                        error={errors.phoneNumber?.message}
+                        size="md"
+                        leftSection={<IconPhone size={16} className="text-blue-400" />}
+                        styles={{
+                          label: { fontWeight: 600, color: '#374151', marginBottom: 6 },
+                          input: { backgroundColor: '#f8fafc', borderColor: errors.phoneNumber ? '#ef4444' : '#e2e8f0' },
+                        }}
+                      />
+                    )}
+                  />
+                </div>
+
+                {/* Submit */}
+                <Button
+                  type="submit"
+                  size="lg"
+                  radius="xl"
+                  fullWidth
+                  loading={loading}
+                  rightSection={!loading && <IconArrowRight size={18} />}
+                  mt={24}
+                  style={{
+                    backgroundColor: '#0d6efd',
+                    border: 'none',
+                    fontWeight: 600,
+                    boxShadow: '0 2px 8px rgba(13,110,253,0.30)',
+                  }}
+                >
+                  Save &amp; Continue
+                </Button>
+
+              </Stack>
+            </form>
+          </Stack>
+        </Paper>
+
+      </div>
+      </div>
+    </div>
+  );
+}
