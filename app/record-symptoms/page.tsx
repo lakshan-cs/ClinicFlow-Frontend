@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
@@ -10,7 +10,8 @@ import {
   Title,
   Text,
   Button,
-  TextInput,
+  Autocomplete,
+  Loader,
   Textarea,
   Stack,
   Group,
@@ -35,7 +36,11 @@ import {
   IconPhone,
   IconUser,
 } from '@tabler/icons-react';
-import { createPatientIntake } from '../../services/patientIntakeService';
+import {
+  createPatientIntake,
+  getChiefComplaintLookup,
+  type ChiefComplaintLookupItem,
+} from '../../services/patientIntakeService';
 import { getPatientById, PatientResponse } from '../../services/patientService';
 import { getUser } from '../../services/authService';
 
@@ -66,6 +71,14 @@ const STEPS = [
 // Component
 // ---------------------------------------------------------------------------
 export default function SymptomsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50" />}>
+      <SymptomsPageContent />
+    </Suspense>
+  );
+}
+
+function SymptomsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const patientId = searchParams.get('patientId');
@@ -74,6 +87,8 @@ export default function SymptomsPage() {
   const [patient, setPatient] = useState<PatientResponse | null>(null);
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [symptomInput, setSymptomInput] = useState('');
+  const [chiefComplaintOptions, setChiefComplaintOptions] = useState<ChiefComplaintLookupItem[]>([]);
+  const [chiefComplaintLoading, setChiefComplaintLoading] = useState(true);
   const symptomInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -82,14 +97,43 @@ export default function SymptomsPage() {
     getPatientById(patientId).then(setPatient).catch(() => {});
   }, [router, patientId]);
 
+  useEffect(() => {
+    let isActive = true;
+
+    getChiefComplaintLookup()
+      .then((items) => {
+        if (isActive) setChiefComplaintOptions(items);
+      })
+      .catch(() => {
+        notifications.show({
+          title: 'Chief complaints unavailable',
+          message: 'Existing chief complaints could not be loaded. You can still type a new one.',
+          color: 'yellow',
+        });
+      })
+      .finally(() => {
+        if (isActive) setChiefComplaintLoading(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<SymptomsFormValues>({
     resolver: zodResolver(symptomsSchema),
     defaultValues: { chiefComplaint: '', notes: '' },
   });
+
+  const chiefComplaintData = chiefComplaintOptions.map((item) => ({
+    value: item.name,
+    label: item.name,
+  }));
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') localStorage.clear();
@@ -133,7 +177,10 @@ export default function SymptomsPage() {
         color: 'green',
       });
 
-      router.push(`/select-doctor?patientId=${patientId}&intakeId=${intake.id}`);
+      const serializedSymptoms = encodeURIComponent(JSON.stringify(symptoms));
+      router.push(
+        `/select-doctor?patientId=${patientId}&intakeId=${intake.id}&chiefComplaint=${encodeURIComponent(data.chiefComplaint)}&symptoms=${serializedSymptoms}`,
+      );
     } catch (err: unknown) {
       let message = 'Could not save symptoms. Please try again.';
       if (err && typeof err === 'object' && 'response' in err) {
@@ -294,17 +341,58 @@ export default function SymptomsPage() {
                 <Stack gap={20}>
 
                   {/* Chief Complaint */}
-                  <TextInput
-                    {...register('chiefComplaint')}
-                    label="Chief Complaint"
-                    placeholder="e.g. Fever and sore throat for 2 days"
-                    required
-                    error={errors.chiefComplaint?.message}
-                    size="md"
-                    styles={{
-                      label: { fontWeight: 600, color: '#374151', marginBottom: 6 },
-                      input: { backgroundColor: '#f8fafc', borderColor: errors.chiefComplaint ? '#ef4444' : '#e2e8f0' },
-                    }}
+                  <Controller
+                    name="chiefComplaint"
+                    control={control}
+                    render={({ field }) => (
+                      <Autocomplete
+                        {...field}
+                        value={field.value ?? ''}
+                        data={chiefComplaintData}
+                        renderOption={({ option }) => (
+                          <div
+                            className="py-2"
+                            style={{
+                              fontSize: '16px',
+                              fontWeight: 200,
+                              color: '#020617',
+                              lineHeight: 1.5,
+                              letterSpacing: '0.01em',
+                            }}
+                          >
+                            <Text inherit>
+                              {String(
+                                typeof option === 'object' && option !== null && 'label' in option
+                                  ? option.label
+                                  : option,
+                              )}
+                            </Text>
+                          </div>
+                        )}
+                        label="Chief Complaint"
+                        placeholder="e.g. Fever and sore throat for 2 days"
+                        description="Search an existing chief complaint or type a new one."
+                        required
+                        error={errors.chiefComplaint?.message}
+                        rightSection={chiefComplaintLoading ? <Loader size={16} /> : null}
+                        size="md"
+                        maxDropdownHeight={280}
+                        styles={{
+                          label: { fontWeight: 600, color: '#374151', marginBottom: 6 },
+                          input: { backgroundColor: '#f8fafc', borderColor: errors.chiefComplaint ? '#ef4444' : '#e2e8f0' },
+                          dropdown: { borderColor: '#cbd5e1', boxShadow: '0 12px 30px rgba(15, 23, 42, 0.12)' },
+                          option: {
+                            paddingTop: 12,
+                            paddingBottom: 12,
+                            paddingLeft: 14,
+                            paddingRight: 14,
+                            color: '#020617',
+                            fontSize: 16,
+                            fontWeight: 700,
+                          },
+                        }}
+                      />
+                    )}
                   />
 
                   {/* Symptoms input */}
@@ -385,7 +473,7 @@ export default function SymptomsPage() {
                       size="lg"
                       radius="xl"
                       variant="outline"
-                      onClick={() => router.back()}
+                      onClick={() => router.push('/register-patient')}
                       leftSection={<IconArrowLeft size={18} />}
                       style={{ flex: 1, fontWeight: 600, borderColor: '#e2e8f0', color: '#374151' }}
                     >
