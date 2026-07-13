@@ -21,6 +21,9 @@ interface ProviderApiItem {
   fullName?: unknown;
   name?: unknown;
   specialty?: unknown;
+  nextAvailableDate?: unknown;
+  availableDate?: unknown;
+  nextSlotDate?: unknown;
   [key: string]: unknown;
 }
 
@@ -28,10 +31,18 @@ export interface ProviderItem {
   id: string;
   fullName: string;
   specialty: string;
+  nextAvailableDate?: string;
 }
 
 const readText = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
+
+const readOptionalDate = (value: unknown): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  if (!normalized) return undefined;
+  return Number.isNaN(Date.parse(normalized)) ? undefined : normalized;
+};
 
 const mapProvider = (item: ProviderApiItem, index: number): ProviderItem | null => {
   const fullName = readText(item.fullName) || readText(item.name);
@@ -44,7 +55,12 @@ const mapProvider = (item: ProviderApiItem, index: number): ProviderItem | null 
       ? String(rawId)
       : `${fullName.toLowerCase().replace(/\s+/g, '-')}-${index}`;
 
-  return { id, fullName, specialty };
+  const nextAvailableDate =
+    readOptionalDate(item.nextAvailableDate) ||
+    readOptionalDate(item.availableDate) ||
+    readOptionalDate(item.nextSlotDate);
+
+  return { id, fullName, specialty, nextAvailableDate };
 };
 
 export const getProvidersBySpecialty = async (specialty: string): Promise<ProviderItem[]> => {

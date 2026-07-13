@@ -32,6 +32,13 @@ const STEPS = [
 
 const DEFAULT_SPECIALTY = 'General Medicine';
 
+const getAvailabilityLabel = (): string => {
+  const now = new Date();
+  const hour = now.getHours();
+  // Once 16:00 has passed, today's slots are gone — next availability is tomorrow.
+  return hour >= 16 ? 'Available tomorrow' : 'Available today';
+};
+
 export default function SelectDoctorPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50" />}>
@@ -163,7 +170,10 @@ function SelectDoctorPageContent() {
       color: 'green',
     });
 
-    router.push('/dashboard');
+    const encodedSymptoms = encodeURIComponent(JSON.stringify(selectedSymptoms));
+    router.push(
+      `/book-appointment?patientId=${patientId}&intakeId=${intakeId}&chiefComplaint=${encodeURIComponent(chiefComplaint || '')}&symptoms=${encodedSymptoms}&providerId=${encodeURIComponent(provider.id)}&providerName=${encodeURIComponent(provider.fullName)}&providerSpecialty=${encodeURIComponent(recommendedSpecialty + " " + provider.specialty)}`,
+    );
   };
 
   return (
@@ -357,7 +367,15 @@ function SelectDoctorPageContent() {
                         <Stack gap={14}>
                           <div>
                             <Text fw={600} size="md" style={{ color: '#0f172a' }}>{provider.fullName}</Text>
-                            <Text size="sm" mt={2} style={{ color: '#475569' }}>{provider.specialty}</Text>
+                            <Text size="sm" mt={2} style={{ color: '#475569' }}>{recommendedSpecialty + " " + provider.specialty}</Text>
+                            <Group gap={6} mt={8}>
+                              <ThemeIcon size={18} radius="xl" color="green" variant="light">
+                                <IconCalendarCheck size={12} />
+                              </ThemeIcon>
+                              <Text size="xs" fw={600} style={{ color: '#047857' }}>
+                                {getAvailabilityLabel()}
+                              </Text>
+                            </Group>
                           </div>
 
                           <Button
