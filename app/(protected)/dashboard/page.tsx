@@ -21,7 +21,7 @@ import {
   IconArrowRight,
   IconHeartbeat,
 } from '@tabler/icons-react';
-import { getUser } from '../../services/authService';
+import { getUser } from '../../../services/authService';
 
 interface UserData {
   token: string;
@@ -77,7 +77,7 @@ export default function Dashboard() {
     'Admin';
 
   const handleStart = () => {
-    router.push('/register-patient');
+    router.push('/intake/register-patient');
   };
 
   return (

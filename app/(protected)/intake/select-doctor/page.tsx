@@ -18,10 +18,10 @@ import {
   IconUserCircle,
   IconUserPlus,
 } from '@tabler/icons-react';
-import { getUser } from '../../services/authService';
-import { getPatientById, type PatientResponse } from '../../services/patientService';
-import { getSpecialtyByChiefComplaint } from '../../services/patientIntakeService';
-import { getProvidersBySpecialty, type ProviderItem } from '../../services/providerService';
+import { getUser } from '../../../../services/authService';
+import { getPatientById, type PatientResponse } from '../../../../services/patientService';
+import { getSpecialtyByChiefComplaint } from '../../../../services/patientIntakeService';
+import { getProvidersBySpecialty, type ProviderItem } from '../../../../services/providerService';
 
 const STEPS = [
   { icon: IconUserPlus, color: 'blue', label: 'Register Patient', desc: 'Patient details & contact info' },
@@ -172,7 +172,7 @@ function SelectDoctorPageContent() {
 
     const encodedSymptoms = encodeURIComponent(JSON.stringify(selectedSymptoms));
     router.push(
-      `/book-appointment?patientId=${patientId}&intakeId=${intakeId}&chiefComplaint=${encodeURIComponent(chiefComplaint || '')}&symptoms=${encodedSymptoms}&providerId=${encodeURIComponent(provider.id)}&providerName=${encodeURIComponent(provider.fullName)}&providerSpecialty=${encodeURIComponent(recommendedSpecialty + " " + provider.specialty)}`,
+      `/intake/book-appointment?patientId=${patientId}&intakeId=${intakeId}&chiefComplaint=${encodeURIComponent(chiefComplaint || '')}&symptoms=${encodedSymptoms}&providerId=${encodeURIComponent(provider.id)}&providerName=${encodeURIComponent(provider.fullName)}&providerSpecialty=${encodeURIComponent(recommendedSpecialty + " " + provider.specialty)}`,
     );
   };
 

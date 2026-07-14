@@ -18,9 +18,9 @@ import {
   IconUserCircle,
   IconUserPlus,
 } from '@tabler/icons-react';
-import { getUser } from '../../services/authService';
-import { getPatientById, type PatientResponse } from '../../services/patientService';
-import { bookAppointment, getProviderAppointments, type ProviderAppointmentSlot } from '../../services/appointmentService';
+import { getUser } from '../../../../services/authService';
+import { getPatientById, type PatientResponse } from '../../../../services/patientService';
+import { bookAppointment, getProviderAppointments, type ProviderAppointmentSlot } from '../../../../services/appointmentService';
 
 const STEPS = [
   { icon: IconUserPlus, color: 'blue', label: 'Register Patient', desc: 'Patient details & contact info' },

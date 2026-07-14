@@ -18,7 +18,7 @@ import {
   Anchor,
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { loginUser, saveUser } from '../../services/authService';
+import { loginUser, saveUser } from '../../../services/authService';
 import type { AxiosError } from 'axios';
 
 const loginSchema = z.object({

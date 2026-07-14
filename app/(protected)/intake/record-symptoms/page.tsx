@@ -40,9 +40,9 @@ import {
   createPatientIntake,
   getChiefComplaintLookup,
   type ChiefComplaintLookupItem,
-} from '../../services/patientIntakeService';
-import { getPatientById, PatientResponse } from '../../services/patientService';
-import { getUser } from '../../services/authService';
+} from '../../../../services/patientIntakeService';
+import { getPatientById, PatientResponse } from '../../../../services/patientService';
+import { getUser } from '../../../../services/authService';
 
 // ---------------------------------------------------------------------------
 // Validation schema
@@ -179,7 +179,7 @@ function SymptomsPageContent() {
 
       const serializedSymptoms = encodeURIComponent(JSON.stringify(symptoms));
       router.push(
-        `/select-doctor?patientId=${patientId}&intakeId=${intake.id}&chiefComplaint=${encodeURIComponent(data.chiefComplaint)}&symptoms=${serializedSymptoms}`,
+        `/intake/select-doctor?patientId=${patientId}&intakeId=${intake.id}&chiefComplaint=${encodeURIComponent(data.chiefComplaint)}&symptoms=${serializedSymptoms}`,
       );
     } catch (err: unknown) {
       let message = 'Could not save symptoms. Please try again.';

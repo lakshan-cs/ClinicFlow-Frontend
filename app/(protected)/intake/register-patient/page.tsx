@@ -34,8 +34,8 @@ import {
   IconSearch,
   IconUserCircle,
 } from '@tabler/icons-react';
-import { createPatient, getAllPatients, PatientResponse } from '../../services/patientService';
-import { getUser } from '../../services/authService';
+import { createPatient, getAllPatients, PatientResponse } from '../../../../services/patientService';
+import { getUser } from '../../../../services/authService';
 
 // ---------------------------------------------------------------------------
 // Validation schema
@@ -132,7 +132,7 @@ export default function RegisterPatientPage() {
       });
 
       // Proceed to step 2 — pass patientId via search param
-      router.push(`/record-symptoms?patientId=${patient.id}`);
+      router.push(`/intake/record-symptoms?patientId=${patient.id}`);
     } catch (error) {
       let errorMessage = 'Could not save patient. Please try again.';
 
@@ -156,6 +156,22 @@ export default function RegisterPatientPage() {
   const handleLogout = () => {
     if (typeof window !== 'undefined') localStorage.clear();
     router.replace('/login');
+  };
+
+  const handleSkipWithSelectedPatient = () => {
+    const patientToUse = selectedPatient ?? registeredPatient;
+    const patientId = patientToUse?.id;
+
+    if (patientId === undefined || patientId === null || String(patientId).trim() === '') {
+      notifications.show({
+        title: 'No patient selected',
+        message: 'Please select a patient from search results before continuing.',
+        color: 'yellow',
+      });
+      return;
+    }
+
+    router.push(`/intake/record-symptoms?patientId=${encodeURIComponent(String(patientId))}`);
   };
 
   return (
@@ -488,9 +504,9 @@ export default function RegisterPatientPage() {
                     size="lg"
                     radius="xl"
                     variant="outline"
-                    disabled={!selectedPatient}
-                    onClick={() => selectedPatient && router.push(`/record-symptoms?patientId=${selectedPatient.id}`)}
-                    style={{ flex: 1, fontWeight: 600, borderColor: selectedPatient ? '#0d6efd' : '#e2e8f0', color: selectedPatient ? '#0d6efd' : '#94a3b8' }}
+                    disabled={!selectedPatient && !registeredPatient}
+                    onClick={handleSkipWithSelectedPatient}
+                    style={{ flex: 1, fontWeight: 600, borderColor: selectedPatient || registeredPatient ? '#0d6efd' : '#e2e8f0', color: selectedPatient || registeredPatient ? '#0d6efd' : '#94a3b8' }}
                     rightSection={<IconArrowRight size={18} />}
                   >
                     Skip — Use Selected Patient
