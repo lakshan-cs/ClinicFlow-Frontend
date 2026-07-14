@@ -20,6 +20,7 @@ import { bookAppointment, getProviderAppointments, type ProviderAppointmentSlot 
 import IntakeStepper from '@/components/intake/IntakeStepper';
 import PatientSummary from '@/components/intake/PatientSummary';
 import AppointmentSlotPicker, { type AppointmentSlot } from '@/components/intake/AppointmentSlotPicker';
+import { loadIntakeFlow } from '@/utils/intakeFlowStorage';
 
 const STEPS = [
   { icon: IconUserPlus, color: 'blue', label: 'Register Patient', desc: 'Patient details & contact info' },
@@ -114,19 +115,19 @@ function BookAppointmentPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const patientId = searchParams.get('patientId');
   const intakeId = searchParams.get('intakeId');
-  const chiefComplaint = searchParams.get('chiefComplaint');
-  const symptomsParam = searchParams.get('symptoms');
-  const providerId = searchParams.get('providerId');
-  const providerName = searchParams.get('providerName');
-  const providerSpecialty = searchParams.get('providerSpecialty');
+  const flowState = useMemo(() => (intakeId ? loadIntakeFlow(intakeId) : null), [intakeId]);
+  const patientId = flowState?.patientId ? String(flowState.patientId) : null;
+  const chiefComplaint = flowState?.chiefComplaint || null;
+  const selectedSymptoms = flowState?.symptoms ?? [];
+  const providerId = flowState?.providerId || null;
+  const providerName = flowState?.providerName || null;
+  const providerSpecialty = flowState?.providerSpecialty || null;
 
   const [patient, setPatient] = useState<PatientResponse | null>(null);
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [availableSlots, setAvailableSlots] = useState<AppointmentSlot[]>([]);
   const [bookedAppointments, setBookedAppointments] = useState<ProviderAppointmentSlot[]>([]);
-  const [loadingSlots, setLoadingSlots] = useState(true);
+  const [loadingSlots, setLoadingSlots] = useState<boolean>(() => Boolean(providerId));
   const [booking, setBooking] = useState(false);
   const [clinicId, setClinicId] = useState<number | null>(null);
   const [pendingSlot, setPendingSlot] = useState<AppointmentSlot | null>(null);
@@ -149,41 +150,25 @@ function BookAppointmentPageContent() {
       return;
     }
 
-    if (!patientId || !intakeId || !providerId) {
+    if (!intakeId || !flowState || !patientId) {
       router.replace('/register-patient');
       return;
     }
 
-    getPatientById(patientId).then(setPatient).catch(() => {});
-  }, [router, patientId, intakeId, providerId]);
-
-  useEffect(() => {
-    if (!symptomsParam) {
-      setSelectedSymptoms([]);
+    if (!providerId) {
+      router.replace(`/intake/select-doctor?intakeId=${encodeURIComponent(String(intakeId))}`);
       return;
     }
 
-    try {
-      const parsed = JSON.parse(symptomsParam) as unknown;
-      if (Array.isArray(parsed)) {
-        setSelectedSymptoms(parsed.filter((item): item is string => typeof item === 'string' && item.trim().length > 0));
-        return;
-      }
-      setSelectedSymptoms([]);
-    } catch {
-      setSelectedSymptoms([]);
-    }
-  }, [symptomsParam]);
+    getPatientById(patientId).then(setPatient).catch(() => {});
+  }, [router, patientId, intakeId, providerId, flowState]);
 
   useEffect(() => {
     if (!providerId) {
-      setLoadingSlots(false);
-      setAvailableSlots([]);
       return;
     }
 
     let isActive = true;
-    setLoadingSlots(true);
 
     getProviderAppointments(providerId)
       .then((bookedSlots) => {
@@ -384,9 +369,7 @@ function BookAppointmentPageContent() {
                   variant="default"
                   leftSection={<IconArrowLeft size={16} />}
                   onClick={() =>
-                    router.replace(
-                      `/intake/select-doctor?patientId=${patientId}&intakeId=${intakeId}&chiefComplaint=${encodeURIComponent(chiefComplaint || '')}&symptoms=${encodeURIComponent(symptomsParam || '')}`,
-                    )
+                    router.replace(`/intake/select-doctor?intakeId=${encodeURIComponent(String(intakeId || ''))}`)
                   }
                   radius="md"
                   style={{ fontWeight: 600 }}

@@ -30,6 +30,7 @@ import IntakeStepper from '@/components/intake/IntakeStepper';
 import PatientSummary from '@/components/intake/PatientSummary';
 import SymptomsForm, { type SymptomsFormValues } from '@/components/intake/SymptomsForm';
 import { symptomsSchema } from '@/schemas/intake';
+import { saveIntakeFlow } from '@/utils/intakeFlowStorage';
 
 type SymptomsPageFormValues = SymptomsFormValues;
 
@@ -153,10 +154,14 @@ function SymptomsPageContent() {
         color: 'green',
       });
 
-      const serializedSymptoms = encodeURIComponent(JSON.stringify(symptoms));
-      router.push(
-        `/intake/select-doctor?patientId=${patientId}&intakeId=${intake.id}&chiefComplaint=${encodeURIComponent(data.chiefComplaint)}&symptoms=${serializedSymptoms}`,
-      );
+      saveIntakeFlow(intake.id, {
+        intakeId: String(intake.id),
+        patientId: patientId!,
+        chiefComplaint: data.chiefComplaint,
+        symptoms,
+      });
+
+      router.push(`/intake/select-doctor?intakeId=${encodeURIComponent(String(intake.id))}`);
     } catch (err: unknown) {
       let message = 'Could not save symptoms. Please try again.';
       if (err && typeof err === 'object' && 'response' in err) {

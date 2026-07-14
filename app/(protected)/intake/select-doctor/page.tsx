@@ -20,6 +20,7 @@ import { getProvidersBySpecialty, type ProviderItem } from '../../../../services
 import IntakeStepper from '@/components/intake/IntakeStepper';
 import PatientSummary from '@/components/intake/PatientSummary';
 import DoctorCard from '@/components/intake/DoctorCard';
+import { loadIntakeFlow, saveIntakeFlow } from '@/utils/intakeFlowStorage';
 
 const STEPS = [
   { icon: IconUserPlus, color: 'blue', label: 'Register Patient', desc: 'Patient details & contact info' },
@@ -49,10 +50,11 @@ function SelectDoctorPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const patientId = searchParams.get('patientId');
   const intakeId = searchParams.get('intakeId');
-  const chiefComplaint = searchParams.get('chiefComplaint');
-  const symptomsParam = searchParams.get('symptoms');
+  const flowState = useMemo(() => (intakeId ? loadIntakeFlow(intakeId) : null), [intakeId]);
+  const patientId = flowState?.patientId ? String(flowState.patientId) : null;
+  const chiefComplaint = flowState?.chiefComplaint || null;
+  const selectedSymptoms = flowState?.symptoms ?? [];
 
   const [patient, setPatient] = useState<PatientResponse | null>(null);
   const [recommendedSpecialty, setRecommendedSpecialty] = useState<string>('');
@@ -60,36 +62,23 @@ function SelectDoctorPageContent() {
   const [loadingSpecialty, setLoadingSpecialty] = useState<boolean>(() => Boolean(chiefComplaint));
   const [loadingProviders, setLoadingProviders] = useState<boolean>(() => Boolean(chiefComplaint));
 
-  const selectedSymptoms = useMemo(() => {
-    if (!symptomsParam) return [];
-
-    try {
-      const parsed = JSON.parse(symptomsParam) as unknown;
-      if (Array.isArray(parsed)) {
-        return parsed.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
-      }
-      return [];
-    } catch {
-      return [];
-    }
-  }, [symptomsParam]);
-
   useEffect(() => {
     if (!getUser()) {
       router.replace('/login');
       return;
     }
 
-    if (!patientId || !intakeId) {
+    if (!intakeId || !flowState || !patientId || !chiefComplaint) {
       router.replace('/intake/register-patient');
       return;
     }
 
     getPatientById(patientId).then(setPatient).catch(() => {});
-  }, [router, patientId, intakeId]);
+  }, [router, patientId, intakeId, flowState, chiefComplaint]);
 
   useEffect(() => {
     if (!chiefComplaint) {
+      router.replace('/intake/register-patient');
       notifications.show({
         title: 'Chief complaint missing',
         message: 'Please return to Step 2 and select a chief complaint.',
@@ -152,16 +141,25 @@ function SelectDoctorPageContent() {
   };
 
   const onSelectDoctor = (provider: ProviderItem) => {
+    if (!intakeId || !patientId || !chiefComplaint) return;
+
     notifications.show({
       title: 'Doctor selected',
       message: `${provider.fullName} selected successfully.`,
       color: 'green',
     });
 
-    const encodedSymptoms = encodeURIComponent(JSON.stringify(selectedSymptoms));
-    router.push(
-      `/intake/book-appointment?patientId=${patientId}&intakeId=${intakeId}&chiefComplaint=${encodeURIComponent(chiefComplaint || '')}&symptoms=${encodedSymptoms}&providerId=${encodeURIComponent(provider.id)}&providerName=${encodeURIComponent(provider.fullName)}&providerSpecialty=${encodeURIComponent(recommendedSpecialty + " " + provider.specialty)}`,
-    );
+    saveIntakeFlow(intakeId, {
+      intakeId: String(intakeId),
+      patientId,
+      chiefComplaint,
+      symptoms: selectedSymptoms,
+      providerId: provider.id,
+      providerName: provider.fullName,
+      providerSpecialty: `${recommendedSpecialty} ${provider.specialty}`.trim(),
+    });
+
+    router.push(`/intake/book-appointment?intakeId=${encodeURIComponent(String(intakeId))}`);
   };
 
   return (
@@ -264,7 +262,7 @@ function SelectDoctorPageContent() {
                 <Button
                   variant="default"
                   leftSection={<IconArrowLeft size={16} />}
-                  onClick={() => router.replace(`/intake/record-symptoms?patientId=${patientId}`)}
+                  onClick={() => router.replace(`/intake/record-symptoms?patientId=${encodeURIComponent(String(patientId || ''))}`)}
                   radius="md"
                   style={{ fontWeight: 600 }}
                 >
