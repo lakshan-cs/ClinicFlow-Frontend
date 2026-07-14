@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   TextInput,
   PasswordInput,
@@ -20,13 +19,7 @@ import {
 import { notifications } from '@mantine/notifications';
 import { loginUser, saveUser } from '../../../services/authService';
 import type { AxiosError } from 'axios';
-
-const loginSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Email is invalid'),
-  password: z.string().min(1, 'Password is required'),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+import { loginSchema, type LoginFormValues } from '@/schemas/auth';
 
 interface ApiErrorResponse {
   message?: string;

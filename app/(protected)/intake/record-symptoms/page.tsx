@@ -4,7 +4,6 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import {
   Paper,
   Text,
@@ -30,17 +29,7 @@ import { getUser } from '../../../../services/authService';
 import IntakeStepper from '@/components/intake/IntakeStepper';
 import PatientSummary from '@/components/intake/PatientSummary';
 import SymptomsForm, { type SymptomsFormValues } from '@/components/intake/SymptomsForm';
-
-// ---------------------------------------------------------------------------
-// Validation schema
-// ---------------------------------------------------------------------------
-const symptomsSchema = z.object({
-  chiefComplaint: z
-    .string()
-    .min(3, 'Chief complaint must be at least 3 characters')
-    .max(300, 'Chief complaint must be less than 300 characters'),
-  notes: z.string().max(1000, 'Notes must be less than 1000 characters').optional(),
-});
+import { symptomsSchema } from '@/schemas/intake';
 
 type SymptomsPageFormValues = SymptomsFormValues;
 
@@ -80,7 +69,7 @@ function SymptomsPageContent() {
 
   useEffect(() => {
     if (!getUser()) router.replace('/login');
-    if (!patientId) { router.replace('/register-patient'); return; }
+    if (!patientId) { router.replace('/intake/register-patient'); return; }
     getPatientById(patientId).then(setPatient).catch(() => {});
   }, [router, patientId]);
 
