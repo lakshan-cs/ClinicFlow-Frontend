@@ -2,21 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import axios from 'axios';
 import {
   Paper,
-  Title,
   Text,
-  Button,
-  TextInput,
-  Input,
-  Stack,
   Group,
   ThemeIcon,
-  Stepper,
 } from '@mantine/core';
 
 import { notifications } from '@mantine/notifications';
@@ -26,16 +20,15 @@ import {
   IconStethoscope,
   IconCalendarCheck,
   IconHeartbeat,
-  IconArrowRight,
-  IconUser,
-  IconMail,
-  IconPhone,
   IconLogout,
   IconSearch,
   IconUserCircle,
 } from '@tabler/icons-react';
 import { createPatient, getAllPatients, PatientResponse } from '../../../../services/patientService';
 import { getUser } from '../../../../services/authService';
+import IntakeStepper from '@/components/intake/IntakeStepper';
+import PatientSummary from '@/components/intake/PatientSummary';
+import PatientRegistrationForm, { type PatientRegistrationFormValues } from '@/components/intake/PatientRegistrationForm';
 
 // ---------------------------------------------------------------------------
 // Validation schema
@@ -65,7 +58,7 @@ const patientSchema = z.object({
     ),
 });
 
-type PatientFormValues = z.infer<typeof patientSchema>;
+type PatientFormValues = PatientRegistrationFormValues;
 
 // ---------------------------------------------------------------------------
 // Wizard step metadata (mirrors dashboard)
@@ -194,41 +187,11 @@ export default function RegisterPatientPage() {
 
         {/* Empty space — patient details will appear here later */}
         <div className="flex-1 px-4 py-5">
-          {summaryPatient ? (
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#94a3b8' }}>Patient Summary</p>
-              <div className="rounded-xl p-4" style={{ backgroundColor: 'rgba(255,255,255,0.07)' }}>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(99,179,237,0.2)' }}>
-                    <IconUserCircle size={22} style={{ color: '#93c5fd' }} />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold leading-tight" style={{ color: '#f1f5f9' }}>{summaryPatient.fullName}</p>
-                    <p className="text-xs mt-0.5" style={{ color: '#94a3b8' }}>ID #{summaryPatient.id}</p>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-start gap-2">
-                    <IconMail size={13} style={{ color: '#94a3b8', marginTop: 2 }} />
-                    <p className="text-xs break-all" style={{ color: '#cbd5e1' }}>{summaryPatient.email}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <IconPhone size={13} style={{ color: '#94a3b8' }} />
-                    <p className="text-xs" style={{ color: '#cbd5e1' }}>{summaryPatient.phoneNumber}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <IconUser size={13} style={{ color: '#94a3b8' }} />
-                    <p className="text-xs" style={{ color: '#cbd5e1' }}>DOB: {summaryPatient.dateOfBirth?.split('T')[0]}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full py-10 text-center">
-              <IconUserCircle size={36} style={{ color: '#334d66', marginBottom: 8 }} />
-              <p className="text-xs" style={{ color: '#4a6580' }}>Patient summary will appear here after registration or selection.</p>
-            </div>
-          )}
+          <PatientSummary
+            patient={summaryPatient}
+            emptyMessage="Patient summary will appear here after registration or selection."
+            nameClassName="text-sm font-bold leading-tight"
+          />
         </div>
 
         {/* Logout */}
@@ -301,63 +264,7 @@ export default function RegisterPatientPage() {
         </div>
 
         {/* ── Wizard stepper ── */}
-        <Paper
-          radius="xl"
-          p={28}
-          mb={24}
-          className="border border-blue-100"
-          style={{ boxShadow: '0 4px 24px rgba(59,130,246,0.08)' }}
-        >
-          <Stepper
-            active={0}
-            size="sm"
-            color="blue"
-            styles={{
-              root: { width: '100%' },
-              steps: { display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-              stepLabel: { fontWeight: 700, fontSize: 13, color: '#1e3a5f', whiteSpace: 'nowrap' },
-              stepDescription: { fontSize: 11, color: '#64748b', marginTop: 1, whiteSpace: 'nowrap' },
-              separator: { borderColor: '#bfdbfe', borderWidth: 2, flex: 1 },
-              step: { gap: 8 },
-            }}
-          >
-            {STEPS.map((s, idx) => {
-              const isActive = idx === 0;
-              return (
-                <Stepper.Step
-                  key={s.label}
-                  label={s.label}
-                  description={s.desc}
-                  styles={{
-                    stepLabel: {
-                      fontWeight: isActive ? 700 : 500,
-                      fontSize: 13,
-                      color: isActive ? '#1e3a5f' : '#94a3b8',
-                      whiteSpace: 'nowrap',
-                    },
-                    stepDescription: {
-                      fontSize: 11,
-                      color: isActive ? '#64748b' : '#cbd5e1',
-                      marginTop: 1,
-                      whiteSpace: 'nowrap',
-                    },
-                  }}
-                  icon={
-                    <ThemeIcon
-                      size={26}
-                      radius="xl"
-                      color={s.color}
-                      variant={isActive ? 'light' : 'subtle'}
-                      style={{ opacity: isActive ? 1 : 0.4 }}
-                    >
-                      <s.icon size={14} />
-                    </ThemeIcon>
-                  }
-                />
-              );
-            })}
-          </Stepper>
-        </Paper>
+        <IntakeStepper steps={STEPS} activeStep={0} baseLabelWeight={700} />
 
         {/* ── Form card ── */}
         <Paper
@@ -367,155 +274,15 @@ export default function RegisterPatientPage() {
           className="w-full border border-blue-100"
           style={{ boxShadow: '0 8px 48px rgba(59,130,246,0.10)' }}
         >
-          <Stack gap={32}>
-
-            {/* Header */}
-            <div>
-              <Group gap={12} mb={4}>
-                <ThemeIcon size={44} radius="xl" color="blue" variant="light">
-                  <IconUserPlus size={22} />
-                </ThemeIcon>
-                <div>
-                  <Title order={2} className="text-gray-800 font-bold text-2xl">
-                    Patient Registration
-                  </Title>
-                  <Text size="sm" c="dimmed" mt={2}>
-                    Step 1 of 4 — Enter the patient&apos;s personal details
-                  </Text>
-                </div>
-              </Group>
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleSubmit(onSubmit)} noValidate>
-              <Stack gap={20}>
-
-                {/* Full Name */}
-                <Controller
-                  name="fullName"
-                  control={control}
-                  render={({ field }) => (
-                    <TextInput
-                      {...field}
-                      label="Full Name"
-                      placeholder="e.g. Jane Doe"
-                      required
-                      error={errors.fullName?.message}
-                      size="md"
-                      leftSection={<IconUser size={16} className="text-blue-400" />}
-                      styles={{
-                        label: { fontWeight: 600, color: '#374151', marginBottom: 6 },
-                        input: { backgroundColor: '#f8fafc', borderColor: errors.fullName ? '#ef4444' : '#e2e8f0' },
-                      }}
-                    />
-                  )}
-                />
-
-                {/* Date of Birth */}
-                <Controller
-                  name="dateOfBirth"
-                  control={control}
-                  render={({ field }) => (
-                    <Input.Wrapper
-                      label="Date of Birth"
-                      required
-                      error={errors.dateOfBirth?.message}
-                      styles={{ label: { fontWeight: 600, color: '#374151', marginBottom: 6 } }}
-                    >
-                      <Input
-                        component="input"
-                        {...field}
-                        type="date"
-                        max={new Date().toISOString().split('T')[0]}
-                        size="md"
-                        error={!!errors.dateOfBirth}
-                        styles={{
-                          input: {
-                            backgroundColor: '#f8fafc',
-                            borderColor: errors.dateOfBirth ? '#ef4444' : '#e2e8f0',
-                            colorScheme: 'light',
-                            color: field.value ? '#1f2937' : '#9ca3af',
-                          },
-                        }}
-                      />
-                    </Input.Wrapper>
-                  )}
-                />
-
-                {/* Email + Phone side by side */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <Controller
-                    name="email"
-                    control={control}
-                    render={({ field }) => (
-                      <TextInput
-                        {...field}
-                        label="Email Address"
-                        placeholder="patient@example.com"
-                        type="email"
-                        required
-                        error={errors.email?.message}
-                        size="md"
-                        leftSection={<IconMail size={16} className="text-blue-400" />}
-                        styles={{
-                          label: { fontWeight: 600, color: '#374151', marginBottom: 6 },
-                          input: { backgroundColor: '#f8fafc', borderColor: errors.email ? '#ef4444' : '#e2e8f0' },
-                        }}
-                      />
-                    )}
-                  />
-
-                  <Controller
-                    name="phoneNumber"
-                    control={control}
-                    render={({ field }) => (
-                      <TextInput
-                        {...field}
-                        label="Phone Number"
-                        placeholder="+1 (555) 000-0000"
-                        type="tel"
-                        required
-                        error={errors.phoneNumber?.message}
-                        size="md"
-                        leftSection={<IconPhone size={16} className="text-blue-400" />}
-                        styles={{
-                          label: { fontWeight: 600, color: '#374151', marginBottom: 6 },
-                          input: { backgroundColor: '#f8fafc', borderColor: errors.phoneNumber ? '#ef4444' : '#e2e8f0' },
-                        }}
-                      />
-                    )}
-                  />
-                </div>
-
-                {/* Submit */}
-                <div className="flex gap-3 mt-6">
-                  <Button
-                    type="submit"
-                    size="lg"
-                    radius="xl"
-                    style={{ flex: 1, backgroundColor: '#0d6efd', border: 'none', fontWeight: 600, boxShadow: '0 2px 8px rgba(13,110,253,0.30)' }}
-                    loading={loading}
-                    rightSection={!loading && <IconArrowRight size={18} />}
-                  >
-                    Save &amp; Continue
-                  </Button>
-                  <Button
-                    type="button"
-                    size="lg"
-                    radius="xl"
-                    variant="outline"
-                    disabled={!selectedPatient && !registeredPatient}
-                    onClick={handleSkipWithSelectedPatient}
-                    style={{ flex: 1, fontWeight: 600, borderColor: selectedPatient || registeredPatient ? '#0d6efd' : '#e2e8f0', color: selectedPatient || registeredPatient ? '#0d6efd' : '#94a3b8' }}
-                    rightSection={<IconArrowRight size={18} />}
-                  >
-                    Skip — Use Selected Patient
-                  </Button>
-                </div>
-
-              </Stack>
-            </form>
-          </Stack>
+          <PatientRegistrationForm
+            control={control}
+            errors={errors}
+            handleSubmit={handleSubmit}
+            onSubmit={onSubmit}
+            loading={loading}
+            canSkip={!!selectedPatient || !!registeredPatient}
+            onSkip={handleSkipWithSelectedPatient}
+          />
         </Paper>
 
       </div>
