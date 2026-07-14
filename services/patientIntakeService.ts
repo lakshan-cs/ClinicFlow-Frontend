@@ -1,4 +1,12 @@
 import axios from 'axios';
+import type {
+  ChiefComplaintLookupApiItem,
+  ChiefComplaintLookupItem,
+  ChiefComplaintSpecialtyLookup,
+  PatientIntakePayload,
+  PatientIntakeResponse,
+  PatientSymptom,
+} from '@/types/patientIntake';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5064';
 
@@ -16,46 +24,13 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-export interface PatientSymptom {
-  symptom: string;
-}
-
-export interface PatientIntakePayload {
-  patientId: number | string;
-  chiefComplaint: string;
-  notes?: string;
-  patientSymptoms: PatientSymptom[];
-}
-
-export interface PatientIntakeResponse {
-  id: string | number;
-  patientId: string | number;
-  chiefComplaint: string;
-  notes?: string;
-  patientSymptoms: PatientSymptom[];
-  [key: string]: unknown;
-}
-
-interface ChiefComplaintLookupApiItem {
-  chiefComplaint?: unknown;
-  chiefComplaintName?: unknown;
-  complaintName?: unknown;
-  name?: unknown;
-  specialty?: unknown;
-  specialtyName?: unknown;
-  [key: string]: unknown;
-}
-
-export interface ChiefComplaintLookupItem {
-  name: string;
-  specialtyName?: string;
-}
-
-export interface ChiefComplaintSpecialtyLookup {
-  id?: number | string;
-  chiefComplaint: string;
-  specialty: string;
-}
+export type {
+  ChiefComplaintLookupItem,
+  ChiefComplaintSpecialtyLookup,
+  PatientIntakePayload,
+  PatientIntakeResponse,
+  PatientSymptom,
+};
 
 const readLookupString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';

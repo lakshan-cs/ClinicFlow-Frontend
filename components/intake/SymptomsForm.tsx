@@ -6,31 +6,10 @@ import {
   IconPlus,
   IconX,
 } from '@tabler/icons-react';
-import type { Control, FieldErrors, SubmitHandler, UseFormHandleSubmit, UseFormRegister } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
+import type { SymptomsFormProps, SymptomsFormValues } from '@/types/intake';
 
-export interface SymptomsFormValues {
-  chiefComplaint: string;
-  notes?: string;
-}
-
-interface SymptomsFormProps {
-  control: Control<SymptomsFormValues>;
-  register: UseFormRegister<SymptomsFormValues>;
-  errors: FieldErrors<SymptomsFormValues>;
-  handleSubmit: UseFormHandleSubmit<SymptomsFormValues>;
-  onSubmit: SubmitHandler<SymptomsFormValues>;
-  chiefComplaintData: { value: string; label: string }[];
-  chiefComplaintLoading: boolean;
-  symptomInputRef: React.RefObject<HTMLInputElement | null>;
-  symptomInput: string;
-  setSymptomInput: (value: string) => void;
-  symptoms: string[];
-  addSymptom: () => void;
-  removeSymptom: (symptom: string) => void;
-  onBack: () => void;
-  loading: boolean;
-}
+export type { SymptomsFormValues };
 
 export default function SymptomsForm({
   control,

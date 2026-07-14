@@ -1,4 +1,9 @@
 import axios from 'axios';
+import type {
+  AppointmentApiItem,
+  BookAppointmentRequest,
+  ProviderAppointmentSlot,
+} from '@/types/appointment';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5064';
 
@@ -16,30 +21,7 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-interface AppointmentApiItem {
-  id?: string | number;
-  appointmentDate?: unknown;
-  dateTime?: unknown;
-  date?: unknown;
-  startTime?: unknown;
-  endTime?: unknown;
-  appointmentTime?: unknown;
-  time?: unknown;
-  slotStart?: unknown;
-  slotEnd?: unknown;
-  status?: unknown;
-  isAvailable?: unknown;
-  [key: string]: unknown;
-}
-
-export interface ProviderAppointmentSlot {
-  id: string;
-  appointmentDate: string;
-  startTime?: string;
-  endTime?: string;
-  status?: string;
-  isAvailable: boolean;
-}
+export type { BookAppointmentRequest, ProviderAppointmentSlot };
 
 const asText = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
@@ -101,13 +83,6 @@ export const getProviderAppointments = async (providerId: string | number): Prom
     return mapped ? [mapped] : [];
   });
 };
-
-export interface BookAppointmentRequest {
-  patientId: number;
-  clinicId: number;
-  providerId: number;
-  dateTime: string; // ISO-8601, e.g. "2026-07-14T08:00:00"
-}
 
 export const bookAppointment = async (payload: BookAppointmentRequest): Promise<void> => {
   await apiClient.post('/api/appointment', payload);

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { ProviderApiItem, ProviderItem } from '@/types/provider';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5064';
 
@@ -16,23 +17,7 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-interface ProviderApiItem {
-  id?: string | number;
-  fullName?: unknown;
-  name?: unknown;
-  specialty?: unknown;
-  nextAvailableDate?: unknown;
-  availableDate?: unknown;
-  nextSlotDate?: unknown;
-  [key: string]: unknown;
-}
-
-export interface ProviderItem {
-  id: string;
-  fullName: string;
-  specialty: string;
-  nextAvailableDate?: string;
-}
+export type { ProviderItem };
 
 const readText = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';

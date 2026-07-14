@@ -52,12 +52,6 @@ const toDisplayDate = (dateKey: string): string => {
   });
 };
 
-interface TimeSlot extends AppointmentSlot {
-  startTime: string;
-  endTime: string;
-  label: string;
-}
-
 const formatTime = (totalMinutes: number): string => {
   const h = Math.floor(totalMinutes / 60);
   const m = totalMinutes % 60;
@@ -70,8 +64,8 @@ const formatTime = (totalMinutes: number): string => {
  * Generate all 20-minute slots for the clinic window.
  * For today, only include slots whose start time is >= minTotalMinutes.
  */
-const generateSlots = (minTotalMinutes: number): TimeSlot[] => {
-  const slots: TimeSlot[] = [];
+const generateSlots = (minTotalMinutes: number): AppointmentSlot[] => {
+  const slots: AppointmentSlot[] = [];
   const openMins = CLINIC_OPEN_HOUR * 60;
   const closeMins = CLINIC_CLOSE_HOUR * 60;
   const startMins = Math.max(openMins, minTotalMinutes);
@@ -130,12 +124,12 @@ function BookAppointmentPageContent() {
 
   const [patient, setPatient] = useState<PatientResponse | null>(null);
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
-  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<AppointmentSlot[]>([]);
   const [bookedAppointments, setBookedAppointments] = useState<ProviderAppointmentSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(true);
   const [booking, setBooking] = useState(false);
   const [clinicId, setClinicId] = useState<number | null>(null);
-  const [pendingSlot, setPendingSlot] = useState<TimeSlot | null>(null);
+  const [pendingSlot, setPendingSlot] = useState<AppointmentSlot | null>(null);
   const [confirmOpened, { open: openConfirm, close: closeConfirm }] = useDisclosure(false);
 
   /** Whether appointments are still open today (before 16:00). */
@@ -255,7 +249,7 @@ function BookAppointmentPageContent() {
     router.replace('/login');
   };
 
-  const onSelectSlot = (slot: TimeSlot) => {
+  const onSelectSlot = (slot: AppointmentSlot) => {
     setPendingSlot(slot);
     openConfirm();
   };

@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, Group, Paper, Stack, Text, ThemeIcon, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
@@ -57,9 +57,22 @@ function SelectDoctorPageContent() {
   const [patient, setPatient] = useState<PatientResponse | null>(null);
   const [recommendedSpecialty, setRecommendedSpecialty] = useState<string>('');
   const [providers, setProviders] = useState<ProviderItem[]>([]);
-  const [loadingSpecialty, setLoadingSpecialty] = useState(true);
-  const [loadingProviders, setLoadingProviders] = useState(true);
-  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
+  const [loadingSpecialty, setLoadingSpecialty] = useState<boolean>(() => Boolean(chiefComplaint));
+  const [loadingProviders, setLoadingProviders] = useState<boolean>(() => Boolean(chiefComplaint));
+
+  const selectedSymptoms = useMemo(() => {
+    if (!symptomsParam) return [];
+
+    try {
+      const parsed = JSON.parse(symptomsParam) as unknown;
+      if (Array.isArray(parsed)) {
+        return parsed.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+      }
+      return [];
+    } catch {
+      return [];
+    }
+  }, [symptomsParam]);
 
   useEffect(() => {
     if (!getUser()) {
@@ -68,7 +81,7 @@ function SelectDoctorPageContent() {
     }
 
     if (!patientId || !intakeId) {
-      router.replace('/register-patient');
+      router.replace('/intake/register-patient');
       return;
     }
 
@@ -76,27 +89,7 @@ function SelectDoctorPageContent() {
   }, [router, patientId, intakeId]);
 
   useEffect(() => {
-    if (!symptomsParam) {
-      setSelectedSymptoms([]);
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(symptomsParam) as unknown;
-      if (Array.isArray(parsed)) {
-        setSelectedSymptoms(parsed.filter((item): item is string => typeof item === 'string' && item.trim().length > 0));
-        return;
-      }
-      setSelectedSymptoms([]);
-    } catch {
-      setSelectedSymptoms([]);
-    }
-  }, [symptomsParam]);
-
-  useEffect(() => {
     if (!chiefComplaint) {
-      setLoadingSpecialty(false);
-      setLoadingProviders(false);
       notifications.show({
         title: 'Chief complaint missing',
         message: 'Please return to Step 2 and select a chief complaint.',
@@ -106,9 +99,6 @@ function SelectDoctorPageContent() {
     }
 
     let isActive = true;
-
-    setLoadingSpecialty(true);
-    setLoadingProviders(true);
 
     const applySpecialtyAndLoadProviders = async (specialty: string) => {
       setRecommendedSpecialty(specialty);
@@ -263,7 +253,7 @@ function SelectDoctorPageContent() {
                         provider={provider}
                         recommendedSpecialty={recommendedSpecialty}
                         availabilityLabel={getAvailabilityLabel()}
-                        onSelectDoctor={(selectedProvider) => onSelectDoctor(selectedProvider as ProviderItem)}
+                        onSelectDoctor={onSelectDoctor}
                       />
                     ))}
                   </div>

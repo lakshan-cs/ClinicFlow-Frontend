@@ -7,24 +7,9 @@ import {
   IconUserPlus,
 } from '@tabler/icons-react';
 import { Controller } from 'react-hook-form';
-import type { Control, FieldErrors, SubmitHandler, UseFormHandleSubmit } from 'react-hook-form';
+import type { PatientRegistrationFormProps, PatientRegistrationFormValues } from '@/types/intake';
 
-export interface PatientRegistrationFormValues {
-  fullName: string;
-  dateOfBirth: string;
-  email: string;
-  phoneNumber: string;
-}
-
-interface PatientRegistrationFormProps {
-  control: Control<PatientRegistrationFormValues>;
-  errors: FieldErrors<PatientRegistrationFormValues>;
-  handleSubmit: UseFormHandleSubmit<PatientRegistrationFormValues>;
-  onSubmit: SubmitHandler<PatientRegistrationFormValues>;
-  loading: boolean;
-  canSkip: boolean;
-  onSkip: () => void;
-}
+export type { PatientRegistrationFormValues };
 
 export default function PatientRegistrationForm({
   control,

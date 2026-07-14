@@ -1,18 +1,6 @@
 import { Button, Group, Paper, Stack, Text, ThemeIcon } from '@mantine/core';
 import { IconCalendarCheck } from '@tabler/icons-react';
-
-interface DoctorCardProvider {
-  id: string | number;
-  fullName: string;
-  specialty: string;
-}
-
-interface DoctorCardProps {
-  provider: DoctorCardProvider;
-  recommendedSpecialty: string;
-  availabilityLabel: string;
-  onSelectDoctor: (provider: DoctorCardProvider) => void;
-}
+import type { DoctorCardProps } from '@/types/intake';
 
 export default function DoctorCard({ provider, recommendedSpecialty, availabilityLabel, onSelectDoctor }: DoctorCardProps) {
   return (

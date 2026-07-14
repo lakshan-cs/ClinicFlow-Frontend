@@ -1,27 +1,7 @@
 import { Badge, Button, Group, Paper, Stack, Text } from '@mantine/core';
+import type { AppointmentSlot, AppointmentSlotPickerProps } from '@/types/intake';
 
-export interface AppointmentSlot {
-  startTime: string;
-  endTime: string;
-  label: string;
-}
-
-interface BookedAppointment {
-  id: string | number;
-  startTime?: string;
-}
-
-interface AppointmentSlotPickerProps {
-  loadingSlots: boolean;
-  availableSlots: AppointmentSlot[];
-  booking: boolean;
-  targetLabel: string;
-  bookedAppointments: BookedAppointment[];
-  onSelectSlot: (slot: AppointmentSlot) => void;
-  extractMinutes: (time: string) => number;
-  formatTime: (totalMinutes: number) => string;
-  slotDurationMins: number;
-}
+export type { AppointmentSlot };
 
 export default function AppointmentSlotPicker({
   loadingSlots,

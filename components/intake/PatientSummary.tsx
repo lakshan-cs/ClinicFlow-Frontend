@@ -4,26 +4,7 @@ import {
   IconUser,
   IconUserCircle,
 } from '@tabler/icons-react';
-
-interface PatientSummaryModel {
-  id: string | number;
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-  dateOfBirth?: string;
-}
-
-interface PatientSummaryProps {
-  patient: PatientSummaryModel | null;
-  emptyMessage: string;
-  nameClassName?: string;
-  showStep2Summary?: boolean;
-  chiefComplaint?: string | null;
-  selectedSymptoms?: string[];
-  showDoctorSummary?: boolean;
-  providerName?: string | null;
-  providerSpecialty?: string | null;
-}
+import type { PatientSummaryProps } from '@/types/intake';
 
 export default function PatientSummary({
   patient,

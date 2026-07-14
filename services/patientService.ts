@@ -1,4 +1,5 @@
 import axios from 'axios';
+import type { PatientPayload, PatientResponse } from '@/types/patient';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5064';
 
@@ -17,21 +18,7 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-export interface PatientPayload {
-  fullName: string;
-  dateOfBirth: string;
-  email: string;
-  phoneNumber: string;
-}
-
-export interface PatientResponse {
-  id: string | number;
-  fullName: string;
-  dateOfBirth: string;
-  email: string;
-  phoneNumber: string;
-  [key: string]: unknown;
-}
+export type { PatientPayload, PatientResponse };
 
 export const createPatient = (data: PatientPayload): Promise<PatientResponse> =>
   apiClient.post<PatientResponse>('/api/Patient', data).then((r) => r.data);

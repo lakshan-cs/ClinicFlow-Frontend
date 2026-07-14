@@ -1,17 +1,5 @@
 import { Paper, Stepper, ThemeIcon } from '@mantine/core';
-
-interface IntakeStepItem {
-  icon: React.ComponentType<{ size?: number }>;
-  color: string;
-  label: string;
-  desc: string;
-}
-
-interface IntakeStepperProps {
-  steps: IntakeStepItem[];
-  activeStep: number;
-  baseLabelWeight?: number;
-}
+import type { IntakeStepperProps } from '@/types/intake';
 
 export default function IntakeStepper({ steps, activeStep, baseLabelWeight = 700 }: IntakeStepperProps) {
   return (

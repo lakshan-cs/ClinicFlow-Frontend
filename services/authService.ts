@@ -1,16 +1,9 @@
 import axios from 'axios';
+import type { LoginCredentials, UserData } from '@/types/auth';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5064/api';
 
-export interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-export interface UserData {
-  token: string;
-  [key: string]: unknown;
-}
+export type { LoginCredentials, UserData };
 
 export async function loginUser(credentials: LoginCredentials): Promise<UserData> {
   const response = await axios.post<UserData>(`${API_BASE_URL}/user/login`, credentials);
