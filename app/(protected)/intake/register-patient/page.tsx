@@ -5,46 +5,22 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
-import {
-  Paper,
-  Text,
-  Group,
-  ThemeIcon,
-} from '@mantine/core';
+import { Paper } from '@mantine/core';
 
 import { notifications } from '@mantine/notifications';
 import {
-  IconUserPlus,
-  IconClipboardList,
-  IconStethoscope,
-  IconCalendarCheck,
-  IconHeartbeat,
-  IconLogout,
   IconSearch,
   IconUserCircle,
 } from '@tabler/icons-react';
 import { createPatient, getAllPatients, PatientResponse } from '../../../../services/patientService';
 import { getUser } from '../../../../services/authService';
 import IntakeStepper from '@/components/intake/IntakeStepper';
-import PatientSummary from '@/components/intake/PatientSummary';
 import PatientRegistrationForm, { type PatientRegistrationFormValues } from '@/components/intake/PatientRegistrationForm';
 import { patientSchema } from '@/schemas/patient';
+import IntakeSidebar from '@/components/intake/IntakeSidebar';
 
 type PatientFormValues = PatientRegistrationFormValues;
 
-// ---------------------------------------------------------------------------
-// Wizard step metadata (mirrors dashboard)
-// ---------------------------------------------------------------------------
-const STEPS = [
-  { icon: IconUserPlus,      color: 'blue',   label: 'Register Patient',  desc: 'Patient details & contact info' },
-  { icon: IconClipboardList, color: 'violet', label: 'Record Symptoms',   desc: 'Chief complaints & symptoms' },
-  { icon: IconStethoscope,   color: 'teal',   label: 'Select a Doctor',   desc: 'Match with a specialist' },
-  { icon: IconCalendarCheck, color: 'green',  label: 'Book Appointment',  desc: 'Schedule & confirm' },
-];
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 export default function RegisterPatientPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -74,110 +50,75 @@ export default function RegisterPatientPage() {
   } = useForm<PatientFormValues>({
     resolver: zodResolver(patientSchema),
     defaultValues: { fullName: '', dateOfBirth: '', email: '', phoneNumber: '' },
-  });
+    });
 
-  const onSubmit = async (data: PatientFormValues) => {
-    setLoading(true);
-    try {
-      const payload = {
-        fullName: data.fullName,
-        dateOfBirth: data.dateOfBirth,
-        email: data.email,
-        phoneNumber: data.phoneNumber,
-      };
+    const onSubmit = async (data: PatientFormValues) => {
+      setLoading(true);
+      try {
+        const payload = {
+          fullName: data.fullName,
+          dateOfBirth: data.dateOfBirth,
+          email: data.email,
+          phoneNumber: data.phoneNumber,
+        };
 
-      const patient = await createPatient(payload);
+        const patient = await createPatient(payload);
 
-      setRegisteredPatient(patient);
+        setRegisteredPatient(patient);
 
-      notifications.show({
-        title: 'Success',
-        message: `Patient registered successfully`,
-        color: 'green',
-      });
+        notifications.show({
+          title: 'Success',
+          message: `Patient registered successfully`,
+          color: 'green',
+        });
 
-      // Proceed to step 2 — pass patientId via search param
-      router.push(`/intake/record-symptoms?patientId=${patient.id}`);
-    } catch (error) {
-      let errorMessage = 'Could not save patient. Please try again.';
+        // Proceed to step 2 — pass patientId via search param
+        router.push(`/intake/record-symptoms?patientId=${patient.id}`);
+      } catch (error) {
+        let errorMessage = 'Could not save patient. Please try again.';
 
-      if (axios.isAxiosError(error)) {
-        errorMessage =
-          error.response?.data?.message ||
-          error.response?.data?.error ||
-          errorMessage;
+        if (axios.isAxiosError(error)) {
+          errorMessage =
+            error.response?.data?.message ||
+            error.response?.data?.error ||
+            errorMessage;
+        }
+
+        notifications.show({
+          title: 'Registration failed',
+          message: errorMessage,
+          color: 'red',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const handleSkipWithSelectedPatient = () => {
+      const patientToUse = selectedPatient ?? registeredPatient;
+      const patientId = patientToUse?.id;
+
+      if (patientId === undefined || patientId === null || String(patientId).trim() === '') {
+        notifications.show({
+          title: 'No patient selected',
+          message: 'Please select a patient from search results before continuing.',
+          color: 'yellow',
+        });
+        return;
       }
 
-      notifications.show({
-        title: 'Registration failed',
-        message: errorMessage,
-        color: 'red',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+      router.push(`/intake/record-symptoms?patientId=${encodeURIComponent(String(patientId))}`);
+    };
 
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') localStorage.clear();
-    router.replace('/login');
-  };
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50 flex font-sans">
 
-  const handleSkipWithSelectedPatient = () => {
-    const patientToUse = selectedPatient ?? registeredPatient;
-    const patientId = patientToUse?.id;
-
-    if (patientId === undefined || patientId === null || String(patientId).trim() === '') {
-      notifications.show({
-        title: 'No patient selected',
-        message: 'Please select a patient from search results before continuing.',
-        color: 'yellow',
-      });
-      return;
-    }
-
-    router.push(`/intake/record-symptoms?patientId=${encodeURIComponent(String(patientId))}`);
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50 flex font-sans">
-
-      {/* ── Sidebar ── */}
-      <aside className="w-64 min-h-screen flex flex-col" style={{ backgroundColor: '#1a3c5e' }}>
-        {/* Brand */}
-        <div className="px-6 py-6 border-b border-white/10">
-          <Group gap={10}>
-            <ThemeIcon size={36} radius="xl" color="blue" variant="light">
-              <IconHeartbeat size={20} />
-            </ThemeIcon>
-            <div>
-              <Text fw={700} size="sm" style={{ color: '#f1f5f9' }} lh={1.2}>ClinicFlow</Text>
-              <Text size="xs" style={{ color: '#94a3b8' }}>Patient Intake</Text>
-            </div>
-          </Group>
-        </div>
-
-        {/* Empty space — patient details will appear here later */}
-        <div className="flex-1 px-4 py-5">
-          <PatientSummary
-            patient={summaryPatient}
-            emptyMessage="Patient summary will appear here after registration or selection."
-            nameClassName="text-sm font-bold leading-tight"
-          />
-        </div>
-
-        {/* Logout */}
-        <div className="px-4 pb-6">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: '#ef4444' }}
-          >
-            <IconLogout size={17} />
-            Logout
-          </button>
-        </div>
-      </aside>
+        {/* ── Sidebar ── */}
+        <IntakeSidebar
+          patient={summaryPatient}
+          emptyMessage="Patient summary will appear here after registration or selection."
+          showStep2Summary={false}
+        />
 
       {/* ── Main content ── */}
       <div className="flex-1 flex flex-col items-center justify-start py-10 px-6 overflow-y-auto">
@@ -236,7 +177,7 @@ export default function RegisterPatientPage() {
         </div>
 
         {/* ── Wizard stepper ── */}
-        <IntakeStepper steps={STEPS} activeStep={0} baseLabelWeight={700} />
+        <IntakeStepper activeStep={0} baseLabelWeight={700} />
 
         {/* ── Form card ── */}
         <Paper

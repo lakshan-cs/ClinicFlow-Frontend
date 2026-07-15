@@ -1,7 +1,16 @@
 import { Paper, Stepper, ThemeIcon } from '@mantine/core';
 import type { IntakeStepperProps } from '@/types/intake';
+import { IconCalendarCheck, IconClipboardList, IconStethoscope, IconUserPlus } from '@tabler/icons-react';
 
-export default function IntakeStepper({ steps, activeStep, baseLabelWeight = 700 }: IntakeStepperProps) {
+export default function IntakeStepper({activeStep, baseLabelWeight = 700 }: IntakeStepperProps) {
+
+  const steps = [
+  { icon: IconUserPlus,      color: 'blue',   label: 'Register Patient',  desc: 'Patient details & contact info' },
+  { icon: IconClipboardList, color: 'violet', label: 'Record Symptoms',   desc: 'Chief complaints & symptoms' },
+  { icon: IconStethoscope,   color: 'teal',   label: 'Select a Doctor',   desc: 'Match with a specialist' },
+  { icon: IconCalendarCheck, color: 'green',  label: 'Book Appointment',  desc: 'Schedule & confirm' },
+];
+
   return (
     <Paper
       radius="xl"

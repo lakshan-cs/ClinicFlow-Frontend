@@ -1,5 +1,6 @@
 import type { Control, FieldErrors, SubmitHandler, UseFormHandleSubmit, UseFormRegister } from 'react-hook-form';
 import type { ProviderItem } from '@/types/provider';
+import { PatientResponse } from './patient';
 
 export interface IntakeStepItem {
   icon: React.ComponentType<{ size?: number }>;
@@ -9,7 +10,6 @@ export interface IntakeStepItem {
 }
 
 export interface IntakeStepperProps {
-  steps: IntakeStepItem[];
   activeStep: number;
   baseLabelWeight?: number;
 }

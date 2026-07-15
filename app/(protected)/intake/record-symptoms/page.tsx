@@ -4,21 +4,9 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Paper,
-  Text,
-  Group,
-  ThemeIcon,
-} from '@mantine/core';
+import { Paper } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import {
-  IconHeartbeat,
-  IconUserPlus,
-  IconClipboardList,
-  IconStethoscope,
-  IconCalendarCheck,
-  IconLogout,
-} from '@tabler/icons-react';
+
 import {
   createPatientIntake,
   getChiefComplaintLookup,
@@ -27,26 +15,13 @@ import {
 import { getPatientById, PatientResponse } from '../../../../services/patientService';
 import { getUser } from '../../../../services/authService';
 import IntakeStepper from '@/components/intake/IntakeStepper';
-import PatientSummary from '@/components/intake/PatientSummary';
 import SymptomsForm, { type SymptomsFormValues } from '@/components/intake/SymptomsForm';
 import { symptomsSchema } from '@/schemas/intake';
 import { saveIntakeFlow } from '@/utils/intakeFlowStorage';
+import IntakeSidebar from '@/components/intake/IntakeSidebar';
 
 type SymptomsPageFormValues = SymptomsFormValues;
 
-// ---------------------------------------------------------------------------
-// Wizard step metadata
-// ---------------------------------------------------------------------------
-const STEPS = [
-  { icon: IconUserPlus,      color: 'blue',   label: 'Register Patient',  desc: 'Patient details & contact info' },
-  { icon: IconClipboardList, color: 'violet', label: 'Record Symptoms',   desc: 'Chief complaints & symptoms' },
-  { icon: IconStethoscope,   color: 'teal',   label: 'Select a Doctor',   desc: 'Match with a specialist' },
-  { icon: IconCalendarCheck, color: 'green',  label: 'Book Appointment',  desc: 'Schedule & confirm' },
-];
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 export default function SymptomsPage() {
   return (
     <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50" />}>
@@ -112,11 +87,6 @@ function SymptomsPageContent() {
     label: item.name,
   }));
 
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') localStorage.clear();
-    router.replace('/login');
-  };
-
   const addSymptom = () => {
     const trimmed = symptomInput.trim();
     if (!trimmed) return;
@@ -180,45 +150,18 @@ function SymptomsPageContent() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50 flex font-sans">
 
       {/* ── Sidebar ── */}
-      <aside className="w-64 min-h-screen flex flex-col" style={{ backgroundColor: '#1a3c5e' }}>
-        <div className="px-6 py-6 border-b border-white/10">
-          <Group gap={10}>
-            <ThemeIcon size={36} radius="xl" color="blue" variant="light">
-              <IconHeartbeat size={20} />
-            </ThemeIcon>
-            <div>
-              <Text fw={700} size="sm" style={{ color: '#f1f5f9' }} lh={1.2}>ClinicFlow</Text>
-              <Text size="xs" style={{ color: '#94a3b8' }}>Patient Intake</Text>
-            </div>
-          </Group>
-        </div>
-
-        {/* Patient Summary */}
-        <div className="flex-1 px-4 py-5">
-          <PatientSummary
-            patient={patient}
-            emptyMessage="Loading patient info..."
-            nameClassName="text-sm font-bold leading-tight"
-          />
-        </div>
-        <div className="px-4 pb-6">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: '#ef4444' }}
-          >
-            <IconLogout size={17} />
-            Logout
-          </button>
-        </div>
-      </aside>
+      <IntakeSidebar
+        patient={patient}
+        emptyMessage="Patient summary will appear here after registration or selection."
+        showStep2Summary={false}
+      />
 
       {/* ── Main content ── */}
       <div className="flex-1 flex flex-col items-center justify-start py-10 px-6 overflow-y-auto">
         <div className="w-full max-w-6xl">
 
           {/* ── Wizard stepper ── */}
-          <IntakeStepper steps={STEPS} activeStep={1} baseLabelWeight={700} />
+          <IntakeStepper activeStep={1} baseLabelWeight={700} />
 
           {/* ── Form card ── */}
           <Paper

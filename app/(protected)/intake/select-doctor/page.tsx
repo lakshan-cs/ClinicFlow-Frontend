@@ -6,28 +6,16 @@ import { Button, Group, Paper, Stack, Text, ThemeIcon, Title } from '@mantine/co
 import { notifications } from '@mantine/notifications';
 import {
   IconArrowLeft,
-  IconCalendarCheck,
-  IconClipboardList,
-  IconHeartbeat,
-  IconLogout,
   IconStethoscope,
-  IconUserPlus,
 } from '@tabler/icons-react';
 import { getUser } from '../../../../services/authService';
 import { getPatientById, type PatientResponse } from '../../../../services/patientService';
 import { getSpecialtyByChiefComplaint } from '../../../../services/patientIntakeService';
 import { getProvidersBySpecialty, type ProviderItem } from '../../../../services/providerService';
 import IntakeStepper from '@/components/intake/IntakeStepper';
-import PatientSummary from '@/components/intake/PatientSummary';
 import DoctorCard from '@/components/intake/DoctorCard';
 import { loadIntakeFlow, saveIntakeFlow } from '@/utils/intakeFlowStorage';
-
-const STEPS = [
-  { icon: IconUserPlus, color: 'blue', label: 'Register Patient', desc: 'Patient details & contact info' },
-  { icon: IconClipboardList, color: 'violet', label: 'Record Symptoms', desc: 'Chief complaints & symptoms' },
-  { icon: IconStethoscope, color: 'teal', label: 'Select a Doctor', desc: 'Match with a specialist' },
-  { icon: IconCalendarCheck, color: 'green', label: 'Book Appointment', desc: 'Schedule & confirm' },
-];
+import IntakeSidebar from '@/components/intake/IntakeSidebar';
 
 const DEFAULT_SPECIALTY = 'General Medicine';
 
@@ -135,11 +123,6 @@ function SelectDoctorPageContent() {
     };
   }, [chiefComplaint]);
 
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') localStorage.clear();
-    router.replace('/login');
-  };
-
   const onSelectDoctor = (provider: ProviderItem) => {
     if (!intakeId || !patientId || !chiefComplaint) return;
 
@@ -167,45 +150,17 @@ function SelectDoctorPageContent() {
       className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50 flex font-sans"
       style={{ fontFamily: 'var(--font-geist-sans), Segoe UI, sans-serif' }}
     >
-      <aside className="w-64 min-h-screen flex flex-col" style={{ backgroundColor: '#1a3c5e' }}>
-        <div className="px-6 py-6 border-b border-white/10">
-          <Group gap={10}>
-            <ThemeIcon size={36} radius="xl" color="blue" variant="light">
-              <IconHeartbeat size={20} />
-            </ThemeIcon>
-            <div>
-              <Text fw={600} size="sm" style={{ color: '#f1f5f9' }} lh={1.2}>ClinicFlow</Text>
-              <Text size="xs" style={{ color: '#94a3b8' }}>Patient Intake</Text>
-            </div>
-          </Group>
-        </div>
-
-        <div className="flex-1 px-4 py-5">
-          <PatientSummary
-            patient={patient}
-            emptyMessage="Loading patient info..."
-            nameClassName="text-sm font-semibold leading-tight"
-            showStep2Summary
-            chiefComplaint={chiefComplaint}
-            selectedSymptoms={selectedSymptoms}
-          />
-        </div>
-
-        <div className="px-4 pb-6">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: '#ef4444' }}
-          >
-            <IconLogout size={17} />
-            Logout
-          </button>
-        </div>
-      </aside>
+      <IntakeSidebar
+        patient={patient}
+        emptyMessage="Patient summary will appear here after registration or selection."
+        showStep2Summary={true}
+        chiefComplaint={chiefComplaint}
+        selectedSymptoms={selectedSymptoms}
+      />
 
       <div className="flex-1 flex flex-col items-center justify-start py-10 px-6 overflow-y-auto">
         <div className="w-full max-w-6xl">
-          <IntakeStepper steps={STEPS} activeStep={2} baseLabelWeight={600} />
+          <IntakeStepper activeStep={2} baseLabelWeight={600} />
 
           <Paper
             shadow="md"

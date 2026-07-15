@@ -8,32 +8,18 @@ import { notifications } from '@mantine/notifications';
 import {
   IconArrowLeft,
   IconCalendarCheck,
-  IconClipboardList,
-  IconHeartbeat,
-  IconLogout,
-  IconStethoscope,
-  IconUserPlus,
 } from '@tabler/icons-react';
 import { getUser } from '../../../../services/authService';
 import { getPatientById, type PatientResponse } from '../../../../services/patientService';
 import { bookAppointment, getProviderAppointments, type ProviderAppointmentSlot } from '../../../../services/appointmentService';
 import IntakeStepper from '@/components/intake/IntakeStepper';
-import PatientSummary from '@/components/intake/PatientSummary';
 import AppointmentSlotPicker, { type AppointmentSlot } from '@/components/intake/AppointmentSlotPicker';
 import { loadIntakeFlow } from '@/utils/intakeFlowStorage';
+import IntakeSidebar from '@/components/intake/IntakeSidebar';
 
-const STEPS = [
-  { icon: IconUserPlus, color: 'blue', label: 'Register Patient', desc: 'Patient details & contact info' },
-  { icon: IconClipboardList, color: 'violet', label: 'Record Symptoms', desc: 'Chief complaints & symptoms' },
-  { icon: IconStethoscope, color: 'teal', label: 'Select a Doctor', desc: 'Match with a specialist' },
-  { icon: IconCalendarCheck, color: 'green', label: 'Book Appointment', desc: 'Schedule & confirm' },
-];
-
-/** Clinic booking window: 08:00–16:00, each slot is 20 minutes. */
 const CLINIC_OPEN_HOUR = 8;
 const CLINIC_CLOSE_HOUR = 16;
 const SLOT_DURATION_MINS = 20;
-
 
 const toDateKey = (input: Date): string => {
   const year = input.getFullYear();
@@ -229,11 +215,6 @@ function BookAppointmentPageContent() {
     };
   }, [providerId, targetDateKey, isBookableToday]);
 
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') localStorage.clear();
-    router.replace('/login');
-  };
-
   const onSelectSlot = (slot: AppointmentSlot) => {
     setPendingSlot(slot);
     openConfirm();
@@ -276,48 +257,20 @@ function BookAppointmentPageContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50 flex font-sans">
-      <aside className="w-64 min-h-screen flex flex-col" style={{ backgroundColor: '#1a3c5e' }}>
-        <div className="px-6 py-6 border-b border-white/10">
-          <Group gap={10}>
-            <ThemeIcon size={36} radius="xl" color="blue" variant="light">
-              <IconHeartbeat size={20} />
-            </ThemeIcon>
-            <div>
-              <Text fw={600} size="sm" style={{ color: '#f1f5f9' }} lh={1.2}>ClinicFlow</Text>
-              <Text size="xs" style={{ color: '#94a3b8' }}>Patient Intake</Text>
-            </div>
-          </Group>
-        </div>
-
-        <div className="flex-1 px-4 py-5">
-          <PatientSummary
-            patient={patient}
-            emptyMessage="Loading patient info..."
-            nameClassName="text-sm font-semibold leading-tight"
-            showStep2Summary
-            chiefComplaint={chiefComplaint}
-            selectedSymptoms={selectedSymptoms}
-            showDoctorSummary
-            providerName={providerName}
-            providerSpecialty={providerSpecialty}
-          />
-        </div>
-
-        <div className="px-4 pb-6">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: '#ef4444' }}
-          >
-            <IconLogout size={17} />
-            Logout
-          </button>
-        </div>
-      </aside>
+      <IntakeSidebar
+        patient={patient}
+        emptyMessage="Patient summary will appear here after registration or selection."
+        showStep2Summary={true}
+        chiefComplaint={chiefComplaint}
+        selectedSymptoms={selectedSymptoms}
+        showDoctorSummary={true}
+        providerName={providerName}
+        providerSpecialty={providerSpecialty}
+      />
 
       <div className="flex-1 flex flex-col items-center justify-start py-10 px-6 overflow-y-auto">
         <div className="w-full max-w-6xl">
-          <IntakeStepper steps={STEPS} activeStep={3} baseLabelWeight={600} />
+          <IntakeStepper activeStep={3} baseLabelWeight={600} />
 
           <Paper
             shadow="md"
