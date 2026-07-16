@@ -21,6 +21,7 @@ const CLINIC_OPEN_HOUR = 8;
 const CLINIC_CLOSE_HOUR = 16;
 const SLOT_DURATION_MINS = 20;
 
+// Converts ex: 2026-07-16T10:45:00 into 2026-07-16
 const toDateKey = (input: Date): string => {
   const year = input.getFullYear();
   const month = String(input.getMonth() + 1).padStart(2, '0');
@@ -28,6 +29,7 @@ const toDateKey = (input: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+// Converts ex: 2026-07-16 into something like "Thursday, July 16, 2026" in the user's locale.
 const toDisplayDate = (dateKey: string): string => {
   const parsed = new Date(`${dateKey}T00:00:00`);
   if (Number.isNaN(parsed.getTime())) return dateKey;
