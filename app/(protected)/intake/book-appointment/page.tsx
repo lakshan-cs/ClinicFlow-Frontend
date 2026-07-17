@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, Group, Modal, Stack, Text, ThemeIcon, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
@@ -16,6 +16,7 @@ import AppointmentSlotPicker, { type AppointmentSlot } from '@/components/intake
 import { loadIntakeFlow } from '@/utils/intakeFlowStorage';
 import IntakeSidebar from '@/components/intake/IntakeSidebar';
 import IntakeCard from '@/components/intake/IntakeCard';
+import SuspenseWrapper from '@/components/intake/SuspenseWrapper';
 
 const CLINIC_OPEN_HOUR = 8;
 const CLINIC_CLOSE_HOUR = 16;
@@ -93,9 +94,9 @@ const extractMinutes = (time: string): number => {
 
 export default function BookAppointmentPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50" />}>
+    <SuspenseWrapper>
       <BookAppointmentPageContent />
-    </Suspense>
+    </SuspenseWrapper>
   );
 }
 

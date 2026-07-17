@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,14 +18,15 @@ import { symptomsSchema } from '@/schemas/intake';
 import { saveIntakeFlow } from '@/utils/intakeFlowStorage';
 import IntakeSidebar from '@/components/intake/IntakeSidebar';
 import IntakeCard from '@/components/intake/IntakeCard';
+import SuspenseWrapper from '@/components/intake/SuspenseWrapper';
 
 type SymptomsPageFormValues = SymptomsFormValues;
 
 export default function SymptomsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50" />}>
+    <SuspenseWrapper>
       <SymptomsPageContent />
-    </Suspense>
+    </SuspenseWrapper>
   );
 }
 

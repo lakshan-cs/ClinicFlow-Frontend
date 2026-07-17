@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button, Group, Stack, Text, ThemeIcon, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
@@ -16,6 +16,7 @@ import DoctorCard from '@/components/intake/DoctorCard';
 import { loadIntakeFlow, saveIntakeFlow } from '@/utils/intakeFlowStorage';
 import IntakeSidebar from '@/components/intake/IntakeSidebar';
 import IntakeCard from '@/components/intake/IntakeCard';
+import SuspenseWrapper from '@/components/intake/SuspenseWrapper';
 
 const DEFAULT_SPECIALTY = 'General Medicine';
 
@@ -28,9 +29,9 @@ const getAvailabilityLabel = (): string => {
 
 export default function SelectDoctorPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-teal-50" />}>
+    <SuspenseWrapper>
       <SelectDoctorPageContent />
-    </Suspense>
+    </SuspenseWrapper>
   );
 }
 
