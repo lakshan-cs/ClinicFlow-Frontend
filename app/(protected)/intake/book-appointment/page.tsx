@@ -2,20 +2,20 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button, Group, Modal, Paper, Stack, Text, ThemeIcon, Title } from '@mantine/core';
+import { Button, Group, Modal, Stack, Text, ThemeIcon, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import {
   IconArrowLeft,
   IconCalendarCheck,
 } from '@tabler/icons-react';
-import { getUser } from '../../../../services/authService';
 import { getPatientById, type PatientResponse } from '../../../../services/patientService';
 import { bookAppointment, getProviderAppointments, type ProviderAppointmentSlot } from '../../../../services/appointmentService';
 import IntakeStepper from '@/components/intake/IntakeStepper';
 import AppointmentSlotPicker, { type AppointmentSlot } from '@/components/intake/AppointmentSlotPicker';
 import { loadIntakeFlow } from '@/utils/intakeFlowStorage';
 import IntakeSidebar from '@/components/intake/IntakeSidebar';
+import IntakeCard from '@/components/intake/IntakeCard';
 
 const CLINIC_OPEN_HOUR = 8;
 const CLINIC_CLOSE_HOUR = 16;
@@ -133,11 +133,6 @@ function BookAppointmentPageContent() {
   const targetLabel = isBookableToday ? 'Today' : 'Tomorrow';
 
   useEffect(() => {
-    if (!getUser()) {
-      router.replace('/login');
-      return;
-    }
-
     if (!intakeId || !flowState || !patientId) {
       router.replace('/register-patient');
       return;
@@ -274,13 +269,7 @@ function BookAppointmentPageContent() {
         <div className="w-full max-w-6xl">
           <IntakeStepper activeStep={3} baseLabelWeight={600} />
 
-          <Paper
-            shadow="md"
-            radius="xl"
-            p={48}
-            className="w-full border border-blue-100"
-            style={{ boxShadow: '0 8px 48px rgba(59,130,246,0.10)' }}
-          >
+          <IntakeCard>
             <Stack gap={24}>
               <div>
                 <Group gap={12} mb={4}>
@@ -333,7 +322,7 @@ function BookAppointmentPageContent() {
                 </Button>
               </Group>
             </Stack>
-          </Paper>
+          </IntakeCard>
         </div>
       </div>
 

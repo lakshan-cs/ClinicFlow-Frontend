@@ -4,7 +4,6 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Paper } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 
 import {
@@ -13,12 +12,12 @@ import {
   type ChiefComplaintLookupItem,
 } from '../../../../services/patientIntakeService';
 import { getPatientById, PatientResponse } from '../../../../services/patientService';
-import { getUser } from '../../../../services/authService';
 import IntakeStepper from '@/components/intake/IntakeStepper';
 import SymptomsForm, { type SymptomsFormValues } from '@/components/intake/SymptomsForm';
 import { symptomsSchema } from '@/schemas/intake';
 import { saveIntakeFlow } from '@/utils/intakeFlowStorage';
 import IntakeSidebar from '@/components/intake/IntakeSidebar';
+import IntakeCard from '@/components/intake/IntakeCard';
 
 type SymptomsPageFormValues = SymptomsFormValues;
 
@@ -44,7 +43,6 @@ function SymptomsPageContent() {
   const symptomInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!getUser()) router.replace('/login');
     if (!patientId) { router.replace('/intake/register-patient'); return; }
     getPatientById(patientId).then(setPatient).catch(() => {});
   }, [router, patientId]);
@@ -164,13 +162,7 @@ function SymptomsPageContent() {
           <IntakeStepper activeStep={1} baseLabelWeight={700} />
 
           {/* ── Form card ── */}
-          <Paper
-            shadow="md"
-            radius="xl"
-            p={48}
-            className="w-full border border-blue-100"
-            style={{ boxShadow: '0 8px 48px rgba(59,130,246,0.10)' }}
-          >
+          <IntakeCard>
             <SymptomsForm
               control={control}
               register={register}
@@ -188,8 +180,7 @@ function SymptomsPageContent() {
               onBack={() => router.push('/intake/register-patient')}
               loading={loading}
             />
-          </Paper>
-
+          </IntakeCard>
         </div>
       </div>
     </div>

@@ -2,13 +2,12 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button, Group, Paper, Stack, Text, ThemeIcon, Title } from '@mantine/core';
+import { Button, Group, Stack, Text, ThemeIcon, Title } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
   IconArrowLeft,
   IconStethoscope,
 } from '@tabler/icons-react';
-import { getUser } from '../../../../services/authService';
 import { getPatientById, type PatientResponse } from '../../../../services/patientService';
 import { getSpecialtyByChiefComplaint } from '../../../../services/patientIntakeService';
 import { getProvidersBySpecialty, type ProviderItem } from '../../../../services/providerService';
@@ -16,6 +15,7 @@ import IntakeStepper from '@/components/intake/IntakeStepper';
 import DoctorCard from '@/components/intake/DoctorCard';
 import { loadIntakeFlow, saveIntakeFlow } from '@/utils/intakeFlowStorage';
 import IntakeSidebar from '@/components/intake/IntakeSidebar';
+import IntakeCard from '@/components/intake/IntakeCard';
 
 const DEFAULT_SPECIALTY = 'General Medicine';
 
@@ -51,11 +51,6 @@ function SelectDoctorPageContent() {
   const [loadingProviders, setLoadingProviders] = useState<boolean>(() => Boolean(chiefComplaint));
 
   useEffect(() => {
-    if (!getUser()) {
-      router.replace('/login');
-      return;
-    }
-
     if (!intakeId || !flowState || !patientId || !chiefComplaint) {
       router.replace('/intake/register-patient');
       return;
@@ -162,13 +157,7 @@ function SelectDoctorPageContent() {
         <div className="w-full max-w-6xl">
           <IntakeStepper activeStep={2} baseLabelWeight={600} />
 
-          <Paper
-            shadow="md"
-            radius="xl"
-            p={48}
-            className="w-full border border-blue-100"
-            style={{ boxShadow: '0 8px 48px rgba(59,130,246,0.10)' }}
-          >
+          <IntakeCard>
             <Stack gap={28}>
               <div>
                 <Group gap={12} mb={4}>
@@ -226,7 +215,7 @@ function SelectDoctorPageContent() {
 
               </Group>
             </Stack>
-          </Paper>
+          </IntakeCard>
         </div>
       </div>
     </div>

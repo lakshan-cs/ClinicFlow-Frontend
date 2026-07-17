@@ -5,19 +5,17 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
-import { Paper } from '@mantine/core';
-
 import { notifications } from '@mantine/notifications';
 import {
   IconSearch,
   IconUserCircle,
 } from '@tabler/icons-react';
 import { createPatient, getAllPatients, PatientResponse } from '../../../../services/patientService';
-import { getUser } from '../../../../services/authService';
 import IntakeStepper from '@/components/intake/IntakeStepper';
 import PatientRegistrationForm, { type PatientRegistrationFormValues } from '@/components/intake/PatientRegistrationForm';
 import { patientSchema } from '@/schemas/patient';
 import IntakeSidebar from '@/components/intake/IntakeSidebar';
+import IntakeCard from '@/components/intake/IntakeCard';
 
 type PatientFormValues = PatientRegistrationFormValues;
 
@@ -39,7 +37,6 @@ export default function RegisterPatientPage() {
 
   // Auth guard
   useEffect(() => {
-    if (!getUser()) router.replace('/login');
     getAllPatients().then(setAllPatients).catch(() => {});
   }, [router]);
 
@@ -180,13 +177,7 @@ export default function RegisterPatientPage() {
         <IntakeStepper activeStep={0} baseLabelWeight={700} />
 
         {/* ── Form card ── */}
-        <Paper
-          shadow="md"
-          radius="xl"
-          p={48}
-          className="w-full border border-blue-100"
-          style={{ boxShadow: '0 8px 48px rgba(59,130,246,0.10)' }}
-        >
+        <IntakeCard>
           <PatientRegistrationForm
             control={control}
             errors={errors}
@@ -196,8 +187,7 @@ export default function RegisterPatientPage() {
             canSkip={!!selectedPatient || !!registeredPatient}
             onSkip={handleSkipWithSelectedPatient}
           />
-        </Paper>
-
+        </IntakeCard>
       </div>
       </div>
     </div>
